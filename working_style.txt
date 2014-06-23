@@ -1,0 +1,64 @@
+This project has all its important files in a Git repository at
+
+  https://github.com/hplgit/quiztools/
+
+It means that the files are stored in the cloud and the Git system keeps
+track of who does what when with the files such that it is possible to roll
+back to previous versions of a file, and if two work at a file at the same
+time, Git is usually able to merge the edits correctly.
+
+To copy the present of files to your own computer, do
+
+ Terminal> git clone git@github.com:hplgit/quiztools.git
+
+This creates a directory tree inf1100-quiz, known as the project directory.
+
+Every time you work with this project do the following command in the
+project directory:
+
+ Terminal> git pull origin master
+
+When you have finished work for some hours or the day, do
+
+ Terminal> git commit -am 'Some quick description of what you have done...'
+ Terminal> git push origin master
+
+If you create a new file, say myfile.txt, remember to register it with Git:
+
+ Terminal> git add myfile.txt
+
+You probably don't need to know more about Git than these commands, but if
+you are curious, you may check out an intro
+
+  http://hplgit.github.com/teamods/bitgit/Langtangen_bitgit-bootstrap.html
+  or
+  http://hplgit.github.io/teamods/bitgit/Langtangen_bitgit_4print.pdf
+
+===== Installing and working with DocOnce =====
+
+DocOnce is a markup language for writing documents in a simple text
+format and automatically creating beautiful documents in LaTeX, HTML,
+and other formats. To install DocOnce, do
+
+  Terminal> git clone https://github.com/hplgit/doconce.git  # takes some time..
+  Terminal> cd doconce
+  Terminal> sudo python setup.py install
+
+DocOnce is frequently updated. To install the latest version some time in
+the future, do
+
+  Terminal> cd doconce
+  Terminal> git pull origin master
+  Terminal> sudo python setup.py install
+
+Several commands are needed to compile a DocOnce document into LaTeX/PDF or
+HTML. See the demo/make.sh file for how this is done. Usually it is
+sufficient to run
+
+  Terminal> sh -x make.sh
+
+to compile the document.
+
+===== Quiz demo =====
+
+See `demo-quiz` directory.
