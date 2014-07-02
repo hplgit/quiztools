@@ -1,0 +1,10 @@
+status: 200
+content-length: 1327
+content-location: https://create.kahoot.it/rest/kahoots/browse/private?limit=30
+server: nginx/1.4.1 (Ubuntu)
+connection: keep-alive
+-content-encoding: gzip
+date: Wed, 02 Jul 2014 08:39:46 GMT
+content-type: application/json
+
+{"entities":[{"difficulty":200,"audience":"University","language":"English","questions":[{"image":"http://s3-eu-west-1.amazonaws.com/lecturequizuploads/76678094-74e2-4f07-8227-910f05fca069_opt","question":"What is the capital of Norway","choices":[{"answer":"Oslo","correct":true},{"answer":"Drammen","correct":false}],"points":true,"time":60000,"numberOfAnswers":2,"questionFormat":0,"video":{"id":"","startTime":0,"endTime":0,"service":"youtube"}}],"title":"Quiztools test quiz!","quizType":"quiz","type":"quiz","visibility":0,"description":"Test quiz of quiztools","uuid":"ae56aeea-fc29-425c-af68-0920a7c107d8","creator":"88505429-ceef-4520-99c7-8438fa49c5b4","creator_username":"jvbrink","created":1404289818041,"modified":1404290158537,"quizUrl":"","tags":""},{"difficulty":200,"audience":"University","language":"English","questions":[{"question":"What is the capital of Norway","choices":[{"answer":"Oslo","correct":true},{"answer":"Drammen","correct":false}],"points":true,"time":60000,"numberOfAnswers":2,"questionFormat":1}],"title":"Quiztools test quiz!","quizType":"quiz","type":"quiz","visibility":0,"description":"Test quiz of quiztools","uuid":"1b61a4f5-bb34-4fbf-b97c-f2b8791f0443","creator":"88505429-ceef-4520-99c7-8438fa49c5b4","creator_username":"jvbrink","created":1404289754113,"modified":1404289754113}]}

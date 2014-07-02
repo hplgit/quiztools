@@ -1,0 +1,61 @@
+title   - Name of the quiz
+quizUrl - ???
+creator -  ???
+creator_username - Username of creator
+questions - List of dictionaries, each dictionary has the following keys
+    question        - Question text
+    questionFormat  - ???
+    time            - in ms
+    image           - Image to be shown while question is asked (url)
+    "video": {
+        "id": "",
+        "startTime": 0,
+        "endTime": 0,
+        "service": "youtube"
+      },
+    choices         - List of dictionaries
+            answer  - Answer text
+            correct - Boolean
+    "points": true,
+    "numberOfAnswers": 4
+"quizType": "quiz",
+  "tags": "animation,characters,movie",
+  "uuid": "ad2d4c76-9037-4fe0-b1cf-b095f11ae58b",
+  "created": 1400100809322,
+  "modified": 1402529718702,
+  "type": "quiz",
+  "id": "ad2d4c76-9037-4fe0-b1cf-b095f11ae58b",
+  "visibility": 1,
+  "difficulty": 250,
+  "audience": "Social",
+  "language": "English",
+  "description": "Quiz where pictures of characters from several animation movies gradually will be revealed. (long version, 30 questions)",
+  "cover": "http://s3-eu-west-1.amazonaws.com/lecturequizuploads/1c3aaa18-05c3-4b1e-923f-a56922938b2f"
+}
+
+
+
+quiz_dict = {
+    'title': 'Quiztools test quiz!',
+    quiz_
+    'questions': [ {
+        'question': 'What is the capital of Norway',
+        'questionNumber' : 4151515,
+        'questionFormat': 1,
+        'time': 60000, # milliseconds
+        'choices': [{
+            'answer': 'Oslo',
+            'correct': 'true'
+        }, {
+            'answer': 'Drammen',
+            'correct': 'False'
+        }]
+    }],
+    'quizType': 'quiz',
+    'visibility': 1,  # Might have to do with privacy?
+    'type': 'quiz',
+    'difficulty': 200,
+    'audience': 'University',
+    'language': 'English',
+    'description': 'Test quiz of quiztools'
+}
