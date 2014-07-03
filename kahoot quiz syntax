@@ -1,16 +1,16 @@
 title       - string, title of the quiz
-type        - ???
-quizType    - I assume this is quiz/discussion/survey
-visibility  - 0 is private, 1 is public
+type        - Not in use, set it to 'quiz'
+quizType    - string, quiz/poll/survey
+visibility  - int, 0 is private, 1 is public
 languange   - string, language of quiz
 description - string, description of quiz
 difficulty  - number up to 500 (??), not sure what it influences
-audience    - string ('University'/'social' etc)
+audience    - string ('University'/'Social'/'School' etc)
 
 questions   - list of dictionaries
     
   question          - string
-  questionFormat    - ???
+  questionFormat    - int, 0 for image, 1 for video
   time              - time for question in ms
   numberOfAnswers   - int from 1 to 4
   image             - string, url to image (must be uploaded to kahoot servers)
@@ -25,6 +25,6 @@ questions   - list of dictionaries
     endTime             - 0
     service             - youtube
 
-quizUrl             - ???
+quizUrl            - ???
 creator            - ???
-creator_username    - string
+creator_username   - string
