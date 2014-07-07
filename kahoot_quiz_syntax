@@ -6,7 +6,7 @@ languange   - string, language of quiz
 description - string, description of quiz
 difficulty  - number up to 500 (??), not sure what it influences
 audience    - string ('University'/'Social'/'School' etc)
-
+cover       - string, url to cover image (must be uploaded to kahoot servers)
 questions   - list of dictionaries
     
   question          - string

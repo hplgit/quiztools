@@ -5,6 +5,8 @@ http://docs.python-requests.org/en/latest/
 
 import json
 import requests
+import HTMLParser
+
 
 def get_access_token(user, password, force_new=False):
     """Fetch old token from file or request new from server, return token"""
@@ -41,22 +43,6 @@ def get_access_token(user, password, force_new=False):
 
     return token
 
-def upload_quiz(quiz, token):
-    """Upload a quiz (python dictionary) to Kahoot"""
-    print "Uploading quiz to kahoot... ",
-
-    # URL for making quizes
-    url = "http://db.kahoot.it/rest/kahoots"
-    
-    r = requests.post(url, data=json.dumps(quiz), headers={
-                            'content-type' : 'application/json',
-                            'authorization' : token})
-
-    # Assert HTML status of response
-    r.raise_for_status()
-    print "Success!"
-
-
 def read_quiz_file(infile):
     """Read a .quiz file, return a list of dictionaries"""
     print "Parsing .quiz-file... ",
@@ -71,6 +57,20 @@ def make_quiz(questions, **kwargs):
     """Take a list of dictionaries, return kahoot quiz dictionary"""
     print "Turning questions into a Kahoot quiz object."
 
+    # Parser for finding images in question text
+    class ImgParser(HTMLParser.HTMLParser):
+        def __init__(self):
+            HTMLParser.HTMLParser.__init__(self)
+            self.img_cnt = 0
+            self.image_path = ""
+
+        def handle_starttag(self, tag, attr):
+            if tag.lower() == 'img':
+                self.img_cnt += 1
+                for att in attr:
+                    if att[0].lower() == 'src':
+                       self.img_path = att[1]
+
     # Parse questions
     for i, q in enumerate(questions):
         # Remove keys not relevant for Kahoot
@@ -78,7 +78,19 @@ def make_quiz(questions, **kwargs):
         q.pop('choice prefix', None)
         q.pop('question prefix', None)
 
-        # Parse choices
+        # Check for images in question text
+        imgParser = ImgParser()
+        imgParser.feed(q["question"])
+        if imgParser.img_cnt == 1:
+            q["image"] = self.upload_image(imgParser.img_path)
+        elif imgParser.img_cnt > 1:
+            print "Warning: Question %i contains more than one image, only"\
+                  "one of them have been uploaded" % i
+            q["image"] = self.upload_image(imgParser.img_path)
+        else:
+            q["image"] = ""
+
+    # Parse choices
         for n, c in enumerate(q['choices']):
             q['choices'][n] = {"answer" : c[1],
                 "correct" : c[0] == u'right'}
@@ -114,9 +126,26 @@ def make_quiz(questions, **kwargs):
             }
     # User-given
     for key in kwargs:
+        if key==cover:
+            self.upload_image()
         quiz[key] = kwargs[key]
 
     return quiz
+
+def upload_quiz(quiz, token):
+    """Upload a quiz (python dictionary) to Kahoot"""
+    print "Uploading quiz to kahoot... ",
+
+    # URL for making quizes
+    url = "http://db.kahoot.it/rest/kahoots"
+    
+    r = requests.post(url, data=json.dumps(quiz), headers={
+                            'content-type' : 'application/json',
+                            'authorization' : token})
+
+    # Assert HTML status of response
+    r.raise_for_status()
+    print "Success!"
 
 def get_quiz(kahoot_id, token):
     """Fetch a given kahoot belonging to the user, returns dictionary"""
@@ -181,6 +210,32 @@ def delete_all_quizes(token):
 
     print "Done deleting kahoots. User should now be clean."
 
+def upload_image(img_filename, token):
+    """Take image filename, post image to kahoot server, return url"""
+    print "Uploading image to server... ",
+    
+    with open(img_filename, 'rb') as img:
+        # URL for uploading media 
+        url = "https://create.kahoot.it/media-api/media/upload"
+
+        img_type = img_filename.split(".")[-1]
+        if img_type not in ["gif", "jpg", "png", "jpeg"]:
+            print "Error: %s is not a supported file-type for Kahoot."
+            print "Make sure image file is png, jpg, jpeg or gif."
+            print "Image has not been uploaded."
+            return ""
+
+        files = {'f': (img_filename, img, 'image/%s' % img_type)}
+
+        r = requests.post(url, files=files, headers={'authorization' : token})   
+
+    # Assert HTML status
+    r.raise_for_status()
+
+    print "success!"
+
+    return r.json()["uri"]
+
 user = 'jvbrink'
 password = 'elektrolyse1'
 
@@ -189,11 +244,19 @@ token = get_access_token(user, password)
 # Example of reading .quiz file, then making and uploading a kahoot quiz
 questions = read_quiz_file("../demo-quiz/.test_jonas.quiz")
 quiz = make_quiz(questions)
+url = upload_image('../demo-quiz/fig/red_panda.jpg', token)
+quiz["cover"] = url
+for q in quiz["questions"]:
+    q["image"] = url
 upload_quiz(quiz, token)
-
+    
+'''
 # Example of fetching a pre-existing kahoot
-quiz = get_quiz("8cd6b505-80b0-4dba-afcd-d0ded3316bb0", token)
-print quiz
+q = get_all_quizes(token)
+kahoot_id =  q[0]["uuid"]
+quiz = get_quiz(kahoot_id, token)
+'''
 
-
-
+'''
+delete_all_quizes(token)
+'''
