@@ -13,7 +13,7 @@ def get_access_token(user, password, force_new=False):
     print "Getting access token... ",
     try:
         assert force_new==False 
-        with open(".%s_token.txt" % user, 'r') as f: token = f.readline()
+        with open(".%s_kahoot_token.txt" % user, 'r') as f: token = f.readline()
         print "Sucsessfully read old token from file"
 
     except:

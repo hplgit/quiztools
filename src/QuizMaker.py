@@ -5,12 +5,11 @@ http://docs.python-requests.org/en/latest/
 
 import json
 import requests
-import HTMLParser
 import getpass
 
 class QuizMaker:
     """Base class for quiz makers."""
-    def _login(self, user, password):
+    def __login(self, user, password):
         """Get access to given site."""
         raise NotImplementedError
 
@@ -55,9 +54,126 @@ class QuizMaker:
         return a quiz-object specialized for the given website."""
         raise NotImplementedError
 
-# HPL: Can you format the kahoot_quiz_syntax file to fit in here
-# as a triple-quoted string? It's good to have the syntax definition
-# right here along with the implementation.
+"""
+___Kahoot syntax guide___
+
+The "quiz" object is used as input to upload_quiz, and as output from
+get_quiz and get_quizzes with KahootQuizMaker. It is a python dictionary
+with various key:value parameters. One of these keys are "questions", which
+should be a list of dictionaries corresponding to each question. 
+
+___PARAMETERS___
+title - string, title of the quiz
+type - string, not in use, set it to 'quiz'
+quizType - string, "quiz"/"poll"/"survey"
+visiblity - int, 0 is private, 1 is public
+language - string, language of the quiz
+description - string, metadata
+audience - string, metadata
+cover - string, url to cover image
+        Note: images must be uploaded to kahoot servers
+        when using the cover kwarg to make_quiz, give the local
+        image file as string, and the method will upload it to
+        the kahoot server and attach the url automatically
+
+Question params
+  question - string, question text
+  questionFormat - int, 0 for image, 1 for video
+  time - time for question in ms
+  points - boolean, defines if the question is worth any points
+  numberOfAnswers - int, from 2 to 4
+  image - string, url to image (must be uploaded to kahoot servers)
+
+  choices - list of dictionary
+    answer - string, text of answer
+    correct - boolean
+
+  # Warning, video is an experimental feature
+  video - dictionary, video to be shown in the background
+    id - string, youtube-id
+    startTime - int, in ms
+    endTime - int, in ms, set to 0 to view to end
+  video             - Video to be shown in the background
+    id                  - youtube-id
+    startTime           - 0
+    endTime             - 0
+    service             - youtube
+
+___EXAMPLE___
+{
+  'title': 'Quiz',
+  'quizType': 'quiz',
+  'type': 'quiz',
+  'visibility': 0,
+  'description': 'Made using quiztools.'
+  'difficulty': 500,
+  'audience': 'University',
+  'language': 'English',
+
+  'questions': 
+  [{
+    'question': u'What is the capital of Norway?',
+    'points': True,
+    'time': 60000,
+    'numberOfAnswers': 4,
+    'questionFormat': 0,
+    'choices': 
+    [{  
+      'answer': u'Helsinki',
+      'correct': False
+    }, {
+      'answer': u'Drammen',
+      'correct': False
+    }, {
+      'answer': u'Oslo',
+      'correct': True},
+    }, {
+      'answer': u'Denmark',
+      'correct': False
+    }],
+    'video': 
+    {
+      'service': 'youtube',
+      'endTime': 0,
+      'id': '',
+      'startTime': 0
+    },
+  }, {
+    'question': u'Which of the following cities are capitals?',
+    'points': True,
+    'time': 60000,
+    'numberOfAnswers': 4,
+    'questionFormat': 0
+    'choices': 
+    [{
+      'answer': u'Sidney',
+      'correct': False
+    }, {
+      'answer': u'Kigali',
+      'correct': True
+    }, {
+      'answer': u'Bonn',
+      'correct': False
+    }, {
+      'answer': u'Bern',
+      'correct': True
+    }, {
+      'answer': u'Ottawa',
+      'correct': True
+    }, {
+      'answer': u'New York',
+      'correct': False
+    }],
+    'video': 
+    {
+      'service': 'youtube',
+      'endTime': 0,
+      'id': '',
+      'startTime': 0
+    },
+  }],
+}
+"""
 
 class KahootQuizMaker(QuizMaker):
     """
@@ -65,7 +181,7 @@ class KahootQuizMaker(QuizMaker):
     your quizzes manually at create.kahoot.it to edit or play them.
     """
     def __init__(self, user, force_new_token=False):
-        self.user = user
+        self.user = user 
 
         # Get access token to be used in HTML requests
         self.__login(force_new_token)
@@ -113,7 +229,7 @@ class KahootQuizMaker(QuizMaker):
 
     def get_quiz(self, kahoot_id):
         """Fetch a given kahoot belonging to the user, returns dictionary."""
-        print "Fetching given quiz from Kahoot... ",
+        vprint("Fetching given quiz from Kahoot... "),
 
         # URL for fetching specific kahoot
         url = "https://create.kahoot.it/rest/kahoots/%s" % kahoot_id
@@ -124,7 +240,7 @@ class KahootQuizMaker(QuizMaker):
 
         # Assert HTML status of response
         r.raise_for_status()
-        print "success!"
+        vprint("success!")
 
         return r.json()
 
@@ -145,7 +261,7 @@ class KahootQuizMaker(QuizMaker):
         return r.json()[u"entities"]
 
     def upload_quiz(self, quiz):
-        """Upload a quiz (python dictionary) to Kahoot."""
+        """Upload a quiz (python dictionary) to Kahoot, return url and id."""
         print "Uploading quiz to kahoot... ",
 
         # URL for making quizzes
@@ -157,8 +273,14 @@ class KahootQuizMaker(QuizMaker):
 
         # Assert HTML status of response
         r.raise_for_status()
+        
         print "success!"
+        kahoot_id = r.json()["uuid"]
+        return kahoot_id, self.fetch_url(kahoot_id)
 
+    def fetch_url(self, kahoot_id):
+        """Find url to access a certain quiz through a browser."""
+        return r"https://play.kahoot.it/#/?quizId="+kahoot_id
 
     def delete_quiz(self, kahoot_id):
         """Delete kahoot of given id."""
@@ -272,6 +394,93 @@ class KahootQuizMaker(QuizMaker):
 
         return r.json()["uri"]
 
+
+"""
+___JotForm syntax guide___
+
+The "form" object is used as input to upload_quiz, and as output from
+get_quiz and get_quizzes with JotFormQuizMaker. It is a python dictionary
+with two keys: "properties" and "questions". The value of both
+keys should be dictionaries. The properties is a set of key:value 
+parameters, the questions is a dictionary where the keys are "1",
+"2", etc. The value of these keys are again dictionaries where
+the key:value pairs are the question parameters. Note that elements such as
+headers and submit-buttons are also included in the questions-dictionary. 
+
+___PARAMETERS___ (All params must be given as strings)
+properties
+  title - the title of the form
+  font  - "Lucia Grande" is default, "Courier" is monospace
+questions
+  name - has no influence, but needs to be set
+  order - in which order the elements are shown in the form
+  special - predefined collections such as gender/date etc, set to "None"
+  type - what type of element it is control_radio/control_head/control_button
+  text - text of header/question etc.
+  subHeader - sub-title, only relevant for headers
+  spreadCols - the number of columns used to show the choices
+  required - is the question mandatory? "Yes/No"
+  options - choices, should be given as one string with options seperated by |
+  labelAlign - where question text is located, "Top"/"Left"/"Right"/"Auto"
+  buttonAlign - where button is located
+  allowOther - allow free-text "Other" answer, "Yes/No"
+  otherText - default other text, only relevant if allowOther is Yes
+
+These parameters are sufficient to create a functional form on JotForm.
+For a more complete list, you can pull a pre-existing form from your JotForm 
+user with JotFormQuizMaker.get_quiz and examine the resulting form-object.
+
+___EXAMPLE___
+{
+  'properties': 
+  {
+    'title': 'Quiztools test quiz!',
+    'font': 'Courier',
+    'styles': 'nova'
+  },
+
+  'questions': 
+  {
+    # Title header
+    '1':
+    { 
+      'headerType': u'Large',
+      'name': u'titleHeader',
+      'order': '1',
+      'type': 'control_head',
+      'text': 'Quiztools test quiz!',
+      'subHeader': 'Made using QuizMaker'
+    },
+    # Multiple choice question using radio buttons
+    '2':
+    {
+      'name': 'firstQuestion',
+      'order': '2',
+      'special': 'None',
+      'type': 'control_radio',
+      'text': 'What is the capital of Norway?',
+      'spreadCols': '1', # Displays options nder each other
+      'reqired': 'No',
+      'options': 'Sydney|Oslo|Stockholm|Paris|Keflavik',
+      'labelAlign': 'Top',
+      'allowOther': 'No',
+      'otherText': 'Other'             
+    },
+    '3':
+    {
+      'name': 'submitButton',
+      'type': 'control_buttom'
+      'buttonAlign': 'Auto',
+      'order': 3,
+      'clear': 'No',
+      'print': 'No',
+      'text': 'Submit',
+      'buttonStyle': 'simple_white'
+    }
+  }
+}
+"""
+
 class JotformQuizMaker(QuizMaker):
     """
     Uses the Jotform service. Register a user at jotform.com.
@@ -306,8 +515,51 @@ class JotformQuizMaker(QuizMaker):
 
         self.client = JotformAPIClient(api_key, debug=True)
 
+    def upload_quiz(self, form):
+        """
+        Take a JotForm form-object and upload it, return the id assigned
+        to the form and the url where it can be located.
+        For more information on the JotForm form-object, see the JotForm 
+        syntax guide.
+        """
+        print "Uploading quiz to JotForm... ",
+
+        # Uses the JotForm API
+        r = self.client.create_form(form)
+        
+        return r['id'], r['url']
+
+    def get_quiz(self, form_id):
+        """Fetch a given quiz belonging to the user, returns dictionary."""
+        print "Fetching given quiz from JotForm...",
+
+        # Note: client.get_form() only gets basic information about a form
+
+        properties = self.client.get_form_properties(form_id)
+        questions = self.client.get_form_questions(form_id)
+
+        print "success!"
+
+        return {"properties" : properties, "questions" : questions}
+
+    def get_all_quizzes(self):
+        """Fetch all forms belonging to user from server, return as list."""
+        print "Fetching all quizzes from JotForm... ",
+
+        # Note, client.get_forms() only returns basic information about forms
+        quizzes = [self.get_quiz(f[u'id']) for f in self.client.get_forms()]
+
+        print "success!"
+        return quizzes
+
+    def delete_quiz(self, quiz_id):
+        """Delete form of given id."""
+        print "Deleting JotForm form... ",
+        self.client.delete(quiz_id)
+        print "success!"
 
 if __name__ == "__main__":
+    '''
     #### EXAMPLES USING Kahoot
     # Create QuizMaker-object
     qm = KahootQuizMaker("jvbrink")
@@ -315,7 +567,7 @@ if __name__ == "__main__":
     # Example of reading .quiz file, then making and uploading a kahoot quiz
     questions = qm.read_quiz_file("../demo-quiz/.test_jonas.quiz")
     quiz = qm.make_quiz(questions) #, cover="../demo-quiz/fig/red_panda.jpg")
-    qm.upload_quiz(quiz)
+    kahoot_id, url = qm.upload_quiz(quiz)
 
     # Example of fetching a pre-existing Kahoot
     #q = qm.get_all_quizzes()
@@ -324,9 +576,10 @@ if __name__ == "__main__":
 
     # Deleting all quizzes on users Kahoot page
     # qm.delete_all_quizzes()
+    '''
 
-    """
     #### EXAMPLES USING JOTFORM
     # Create QuizMaker-object
     qm = JotformQuizMaker("jvbrink")
-    """
+    
+    
