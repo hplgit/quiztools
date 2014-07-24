@@ -57,15 +57,15 @@ class QuizMaker:
 """
 ___Kahoot syntax guide___
 
-The "quiz" object is used as input to upload_quiz, and as output from
+The 'quiz' object is used as input to upload_quiz, and as output from
 get_quiz and get_quizzes with KahootQuizMaker. It is a python dictionary
-with various key:value parameters. One of these keys are "questions", which
+with various key:value parameters. One of these keys are 'questions', which
 should be a list of dictionaries corresponding to each question. 
 
 ___PARAMETERS___
 title - string, title of the quiz
 type - string, not in use, set it to 'quiz'
-quizType - string, "quiz"/"poll"/"survey"
+quizType - string, 'quiz'/'poll'/'survey'
 visiblity - int, 0 is private, 1 is public
 language - string, language of the quiz
 description - string, metadata
@@ -77,101 +77,97 @@ cover - string, url to cover image
         the kahoot server and attach the url automatically
 
 Question params
-  question - string, question text
-  questionFormat - int, 0 for image, 1 for video
-  time - time for question in ms
-  points - boolean, defines if the question is worth any points
-  numberOfAnswers - int, from 2 to 4
-  image - string, url to image (must be uploaded to kahoot servers)
+    question - string, question text
+    questionFormat - int, 0 for image, 1 for video
+    time - time for question in ms
+    points - boolean, defines if the question is worth any points
+    numberOfAnswers - int, from 2 to 4
+    image - string, url to image (must be uploaded to kahoot servers)
 
-  choices - list of dictionary
-    answer - string, text of answer
-    correct - boolean
+    choices - list of dictionary
+        answer - string, text of answer
+        correct - boolean
 
-  # Warning, video is an experimental feature
-  video - dictionary, video to be shown in the background
-    id - string, youtube-id
-    startTime - int, in ms
-    endTime - int, in ms, set to 0 to view to end
-  video             - Video to be shown in the background
-    id                  - youtube-id
-    startTime           - 0
-    endTime             - 0
-    service             - youtube
+    # Warning, video is an experimental feature
+    video - dictionary, video to be shown in the background
+        id - string, youtube-id
+        startTime - int, in ms
+        endTime - int, in ms, set to 0 to view to end
+        service - "youtube", only supported service so feature
 
 ___EXAMPLE___
 {
-  'title': 'Quiz',
-  'quizType': 'quiz',
-  'type': 'quiz',
-  'visibility': 0,
-  'description': 'Made using quiztools.'
-  'difficulty': 500,
-  'audience': 'University',
-  'language': 'English',
+    'title': 'Quiz',
+    'quizType': 'quiz',
+    'type': 'quiz',
+    'visibility': 0,
+    'description': 'Made using quiztools.'
+    'difficulty': 500,
+    'audience': 'University',
+    'language': 'English',
 
-  'questions': 
-  [{
-    'question': u'What is the capital of Norway?',
-    'points': True,
-    'time': 60000,
-    'numberOfAnswers': 4,
-    'questionFormat': 0,
-    'choices': 
-    [{  
-      'answer': u'Helsinki',
-      'correct': False
-    }, {
-      'answer': u'Drammen',
-      'correct': False
-    }, {
-      'answer': u'Oslo',
-      'correct': True},
-    }, {
-      'answer': u'Denmark',
-      'correct': False
-    }],
-    'video': 
-    {
-      'service': 'youtube',
-      'endTime': 0,
-      'id': '',
-      'startTime': 0
-    },
-  }, {
-    'question': u'Which of the following cities are capitals?',
-    'points': True,
-    'time': 60000,
-    'numberOfAnswers': 4,
-    'questionFormat': 0
-    'choices': 
+    'questions': 
     [{
-      'answer': u'Sidney',
-      'correct': False
+        'question': u'What is the capital of Norway?',
+        'points': True,
+        'time': 60000,
+        'numberOfAnswers': 4,
+        'questionFormat': 0,
+        'choices': 
+        [{  
+            'answer': u'Helsinki',
+            'correct': False
+        }, {
+            'answer': u'Drammen',
+            'correct': False
+        }, {
+            'answer': u'Oslo',
+            'correct': True
+        }, {
+            'answer': u'Denmark',
+            'correct': False
+        }],
+        'video': 
+        {
+            'service': 'youtube',
+            'endTime': 0,
+            'id': '',
+            'startTime': 0
+        },
     }, {
-      'answer': u'Kigali',
-      'correct': True
-    }, {
-      'answer': u'Bonn',
-      'correct': False
-    }, {
-      'answer': u'Bern',
-      'correct': True
-    }, {
-      'answer': u'Ottawa',
-      'correct': True
-    }, {
-      'answer': u'New York',
-      'correct': False
+        'question': u'Which of the following cities are capitals?',
+        'points': True,
+        'time': 60000,
+        'numberOfAnswers': 4,
+        'questionFormat': 0
+        'choices': 
+        [{
+            'answer': u'Sidney',
+           'correct': False
+        }, {
+            'answer': u'Kigali',
+            'correct': True
+        }, {
+            'answer': u'Bonn',
+            'correct': False
+        }, {
+            'answer': u'Bern',
+            'correct': True
+        }, {
+            'answer': u'Ottawa',
+            'correct': True
+        }, {
+            'answer': u'New York',
+            'correct': False
+        }],
+        'video': 
+        {
+            'service': 'youtube',
+            'endTime': 0,
+            'id': '',
+            'startTime': 0
+        },
     }],
-    'video': 
-    {
-      'service': 'youtube',
-      'endTime': 0,
-      'id': '',
-      'startTime': 0
-    },
-  }],
 }
 """
 
@@ -329,8 +325,8 @@ class KahootQuizMaker(QuizMaker):
 
             # If there are more choices than 4, the rest are truncated
             if n+1 > 4:
-                print "Warning: Kahoot only supports up to 4 answers, " \
-                      "%i of the answers of question %i have been truncated!" \
+                print "Warning: Kahoot only supports up to 4 answers, %i of " \
+                      "the answers of question %i have been truncated!" \
                       % (n+1-4, i+1)
 
             # Additional question parameters
@@ -342,7 +338,6 @@ class KahootQuizMaker(QuizMaker):
                           "endTime" : 0,
                           "service" : "youtube"}
             q["points"] = True
-
         # Add additional parameters
         # Default parameters
         quiz = {
@@ -398,33 +393,33 @@ class KahootQuizMaker(QuizMaker):
 """
 ___JotForm syntax guide___
 
-The "form" object is used as input to upload_quiz, and as output from
+The 'form' object is used as input to upload_quiz, and as output from
 get_quiz and get_quizzes with JotFormQuizMaker. It is a python dictionary
-with two keys: "properties" and "questions". The value of both
+with two keys: 'properties' and 'questions'. The value of both
 keys should be dictionaries. The properties is a set of key:value 
-parameters, the questions is a dictionary where the keys are "1",
+parameters, the questions is a dictionary where the keys are '1',
 "2", etc. The value of these keys are again dictionaries where
 the key:value pairs are the question parameters. Note that elements such as
 headers and submit-buttons are also included in the questions-dictionary. 
 
 ___PARAMETERS___ (All params must be given as strings)
 properties
-  title - the title of the form
-  font  - "Lucia Grande" is default, "Courier" is monospace
+    title - the title of the form
+    font  - "Lucia Grande" is default, "Courier" is monospace
 questions
-  name - has no influence, but needs to be set
-  order - in which order the elements are shown in the form
-  special - predefined collections such as gender/date etc, set to "None"
-  type - what type of element it is control_radio/control_head/control_button
-  text - text of header/question etc.
-  subHeader - sub-title, only relevant for headers
-  spreadCols - the number of columns used to show the choices
-  required - is the question mandatory? "Yes/No"
-  options - choices, should be given as one string with options seperated by |
-  labelAlign - where question text is located, "Top"/"Left"/"Right"/"Auto"
-  buttonAlign - where button is located
-  allowOther - allow free-text "Other" answer, "Yes/No"
-  otherText - default other text, only relevant if allowOther is Yes
+    name - has no influence, but needs to be set
+    order - in which order the elements are shown in the form
+    special - predefined collections such as gender/date etc, set to "None"
+    type - what type of element it is control_radio/control_head/control_button
+    text - text of header/question etc.
+    subHeader - sub-title, only relevant for headers
+    spreadCols - the number of columns used to show the choices
+    required - is the question mandatory? "Yes/No"
+    options - choices, should be given as one string with options seperated by |
+    labelAlign - where question text is located, "Top"/"Left"/"Right"/"Auto"
+    buttonAlign - where button is located
+    allowOther - allow free-text "Other" answer, "Yes/No"
+    otherText - default other text, only relevant if allowOther is Yes
 
 These parameters are sufficient to create a functional form on JotForm.
 For a more complete list, you can pull a pre-existing form from your JotForm 
@@ -432,52 +427,52 @@ user with JotFormQuizMaker.get_quiz and examine the resulting form-object.
 
 ___EXAMPLE___
 {
-  'properties': 
-  {
-    'title': 'Quiztools test quiz!',
-    'font': 'Courier',
-    'styles': 'nova'
-  },
+    'properties': 
+    {
+         'title': 'Quiztools test quiz!',
+          'font': 'Courier',
+          'styles': 'nova'
+    },
 
-  'questions': 
-  {
-    # Title header
-    '1':
-    { 
-      'headerType': u'Large',
-      'name': u'titleHeader',
-      'order': '1',
-      'type': 'control_head',
-      'text': 'Quiztools test quiz!',
-      'subHeader': 'Made using QuizMaker'
-    },
-    # Multiple choice question using radio buttons
-    '2':
+    'questions': 
     {
-      'name': 'firstQuestion',
-      'order': '2',
-      'special': 'None',
-      'type': 'control_radio',
-      'text': 'What is the capital of Norway?',
-      'spreadCols': '1', # Displays options nder each other
-      'reqired': 'No',
-      'options': 'Sydney|Oslo|Stockholm|Paris|Keflavik',
-      'labelAlign': 'Top',
-      'allowOther': 'No',
-      'otherText': 'Other'             
-    },
-    '3':
-    {
-      'name': 'submitButton',
-      'type': 'control_buttom'
-      'buttonAlign': 'Auto',
-      'order': 3,
-      'clear': 'No',
-      'print': 'No',
-      'text': 'Submit',
-      'buttonStyle': 'simple_white'
+        # Title header
+        '1':
+        { 
+            'headerType': 'Large',
+            'name': 'titleHeader',
+            'order': '1',
+            'type': 'control_head',
+            'text': 'Quiztools test quiz!',
+            'subHeader': 'Made using QuizMaker'
+        },
+        # Multiple choice question using radio buttons
+        '2':
+        {
+            'name': 'firstQuestion',
+            'order': '2',
+            'special': 'None',
+            'type': 'control_radio',
+            'text': 'What is the capital of Norway?',
+            'spreadCols': '1', # Displays options nder each other
+            'reqired': 'No',
+            'options': 'Sydney|Oslo|Stockholm|Paris|Keflavik',
+            'labelAlign': 'Top',
+            'allowOther': 'No',
+            'otherText': 'Other'             
+        },
+        '3':
+        {
+            'name': 'submitButton',
+            'type': 'control_buttom'
+            'buttonAlign': 'Auto',
+            'order': 3,
+            'clear': 'No',
+            'print': 'No',
+            'text': 'Submit',
+            'buttonStyle': 'simple_white'
+        }
     }
-  }
 }
 """
 
@@ -523,10 +518,11 @@ class JotformQuizMaker(QuizMaker):
         syntax guide.
         """
         print "Uploading quiz to JotForm... ",
-
+        
         # Uses the JotForm API
         r = self.client.create_form(form)
         
+        print "success!"
         return r['id'], r['url']
 
     def get_quiz(self, form_id):
@@ -547,7 +543,9 @@ class JotformQuizMaker(QuizMaker):
         print "Fetching all quizzes from JotForm... ",
 
         # Note, client.get_forms() only returns basic information about forms
-        quizzes = [self.get_quiz(f[u'id']) for f in self.client.get_forms()]
+        form_filter = {"status:ne":"DELETED"}
+        forms = self.client.get_forms(None, None, form_filter, None)
+        quizzes = [self.get_quiz(f[u'id']) for f in forms]
 
         print "success!"
         return quizzes
@@ -555,8 +553,105 @@ class JotformQuizMaker(QuizMaker):
     def delete_quiz(self, quiz_id):
         """Delete form of given id."""
         print "Deleting JotForm form... ",
-        self.client.delete(quiz_id)
+        self.client.delete_form(quiz_id)
         print "success!"
+
+    def delete_all_quizzes(self):
+        """Delete all forms of user."""
+        print "Deleting all JotForm forms... ",
+        for quiz_id in [f[u'id'] for f in self.client.get_forms()]:
+            self.delete_quiz(quiz_id)
+        print "success!"
+
+    def make_quiz(self, questions, **kwargs):
+        """
+        Take a list of dictionaries of the format given by reading 
+        a .quiz-file. Return the corresponding JotForm quiz-object.
+        """
+        print "Turning questions into a JotForm quiz-object."
+
+        form = \
+        {
+            'properties':
+            {
+                'title': 'Quiztools test quiz!',
+                #'sendpostdata': u'No',
+                #'activeRedirect': u'thanktext'
+            },
+            'questions': {}
+        }
+       
+        # Add form properties
+        for k in kwargs:
+          form['properties'][k] = kwargs[k]
+
+        # Add header to the quiz
+        form['questions']['1'] = \
+        {
+            'headerType': 'Large',
+            'name': 'titleHeader',
+            'order': '1',
+            'type': 'control_head',
+            'text': 'Quiztools test quiz!',
+            'subHeader': 'Made using quiztools',
+        }
+        
+        default_question = \
+        {
+            'name': '',
+            'special': 'None',
+            'spreadCols': '1',
+            'required': 'No',
+            'labelAlign': 'Top',
+            'allowOther': 'No',
+            'otherTest': 'Other',
+        }
+
+        for q in questions:
+            question = default_question.copy()
+            question['name'] = str(len(form['questions'])+1)
+            question['text'] = q['question']
+            question['order'] = str(len(form['questions'])+1)
+            question['options'] = "|".join(c[1] for c in q['choices'])
+            #nc = sum([c[0]=='right' for c in q['choices']])
+            question['type'] = 'control_radio' #if (nc == 1) \
+                                           #else 'control_checkbox'
+            question['calcVales'] = "|".join([str(1*(c[0]=='right')) 
+                                      for c in q["choices"]])
+            form['questions'][str(len(form['questions'])+1)] = question
+
+        # Add a hidden score tab
+        form['questions'][str(len(form['questions'])+1)] = \
+        {
+            'name': 'score',
+            'required': 'no',
+            'text': 'Score',
+            'defaultResult': '0',
+            'hidden': 'Yes',
+            'size': 20,
+            'type': 'control_calculation',
+            'order': str(len(form['questions'])+1)
+        }
+   
+        # Add a submit button to quiz
+        form['questions'][str(len(form['questions'])+1)] = \
+        {
+            'name': 'submitButton',
+            'type': 'control_button',
+            'buttonAlign': 'Auto',
+            'order': str(len(form['questions'])+1),
+            'clear': 'No',
+            'print': 'No',
+            'text': 'Complete Quiz',
+            'buttonStyle': 'simple_blue'
+        }
+
+        # Add properties used in calculation
+        form["properties"]["operands"] = "1" + ","*(len(form["questions"])-4)
+        form["properties"]["equation"] = \
+        "+".join(['{%i}' % i for i in range(2,len(form['questions'])-1)])
+
+        return form
 
 if __name__ == "__main__":
     '''
@@ -566,7 +661,7 @@ if __name__ == "__main__":
 
     # Example of reading .quiz file, then making and uploading a kahoot quiz
     questions = qm.read_quiz_file("../demo-quiz/.test_jonas.quiz")
-    quiz = qm.make_quiz(questions) #, cover="../demo-quiz/fig/red_panda.jpg")
+    quiz = qm.make_quiz(questions) #, cover="../demo-qui8z/fig/red_panda.jpg")
     kahoot_id, url = qm.upload_quiz(quiz)
 
     # Example of fetching a pre-existing Kahoot
@@ -581,5 +676,16 @@ if __name__ == "__main__":
     #### EXAMPLES USING JOTFORM
     # Create QuizMaker-object
     qm = JotformQuizMaker("jvbrink")
+
+    print qm.get_all_quizzes()
+    '''
+    questions = qm.read_quiz_file("../demo-quiz/.test_jonas.quiz")
+    quiz = qm.make_quiz(questions)
+    print quiz
+    quiz_id, url = qm.upload_quiz(quiz)
     
-    
+    qm.client.set_form_properties(quiz_id, {'activeRedirect': u'thanktext'})
+    print qm.get_quiz(quiz_id)["properties"]["sendpostdata"]
+
+    print url
+    '''
