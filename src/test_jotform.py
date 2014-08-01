@@ -16,6 +16,12 @@ def read_quiz_file(quiz_file):
 questions = read_quiz_file("../demo-quiz/.test_jonas.quiz")
 
 
+pattern = r'''<img +src=["'](.+?)["']'''
+import re
+filenames = re.findall(pattern, html_text)
+for filename in filenames:
+   # upload filename
+
 form = \
 {
     'properties':

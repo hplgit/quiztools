@@ -249,6 +249,12 @@ quiz["cover"] = url
 for q in quiz["questions"]:
     q["image"] = url
 upload_quiz(quiz, token)
+
+pattern = r'''<img +src=["'](.+?)["']'''
+import re
+filenames = re.findall(pattern, html_text)
+for filename in filenames:
+   # upload filename
     
 '''
 # Example of fetching a pre-existing kahoot

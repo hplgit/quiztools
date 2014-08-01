@@ -6,15 +6,16 @@ http://docs.python-requests.org/en/latest/
 import json
 import requests
 import getpass
+import re
 
 class QuizMaker:
     """Base class for quiz makers."""
-    def __login(self, user, password):
+    def login(self, user, password):
         """Get access to given site."""
         raise NotImplementedError
 
     def get_quiz(self, quiz_id):
-        """Return quiz with given id."""
+        """Return quiz-object with given id."""
         raise NotImplementedError
 
     def get_all_quizzes(self):
@@ -42,7 +43,7 @@ class QuizMaker:
     def read_quiz_file(self, quiz_file):
         """Read a .quiz file, return a list of dictionaries."""
         print "Reading .quiz-file... ",
-        with open(quiz_file) as f:
+        with open(self.path+quiz_file) as f:
             questions = eval(f.read())
         assert type(questions) == list
         assert type(questions[0]) == dict
@@ -53,6 +54,14 @@ class QuizMaker:
         """Take a list of dictionaries as found when parsing .quiz-file,
         return a quiz-object specialized for the given website."""
         raise NotImplementedError
+
+
+    def find_images(self, html_text):
+        """Parse a HTML string and extract image filenames."""
+        pattern = r'''<img +src=["'](.+?)["']'''
+        img_filenames = re.findall(pattern, html_text)
+        return img_filenames
+
 
 """
 ___Kahoot syntax guide___
@@ -176,19 +185,20 @@ class KahootQuizMaker(QuizMaker):
     Uses the Kahoot service. Register a user at getkahoot.com. Accesses
     your quizzes manually at create.kahoot.it to edit or play them.
     """
-    def __init__(self, user, force_new_token=False):
+    def __init__(self, user, path="", force_new=False):
         self.user = user 
+        self.path = path
 
         # Get access token to be used in HTML requests
-        self.__login(force_new_token)
+        self.login(force_new)
 
 
-    def __login(self, force_new_token=False):
+    def login(self, force_new=False):
         """Read access token from file or request new from server."""
         print "Getting access token... ",
         user = self.user
         try:
-            assert force_new_token == False
+            assert force_new == False
             with open(".%s_kahoot_token.txt" % user, "r") as f:
                 token = f.readline()
             print "sucsessfully read old token from file"
@@ -220,6 +230,12 @@ class KahootQuizMaker(QuizMaker):
             with open(".%s_kahoot_token.txt" % user, "w") as f:
                 f.write(token)
             print "New access token recieved from server and saved to file."
+
+        # Assert that connection works
+        try:
+            self.get_quizzes()
+        except:
+            print "Access denied. Token may be outdated."
 
         self.token = token
 
@@ -313,6 +329,20 @@ class KahootQuizMaker(QuizMaker):
 
         # Extract and modify questions
         for i, q in enumerate(questions):
+            # Check for images in question text
+            img_filenames = self.find_images(q["question"])
+            if len(img_filenames) == 0:
+                q["image"] = ""
+            elif len(img_filenames) == 1:
+                q["image"] = self.upload_image(img_filenames[0])
+            else:
+                q["image"] = self.upload_image(img_filenames[0])
+                print "Warning: Question %i contains more than one image, only"\
+                  "one of them have been uploaded" % i
+
+            # Remove HTML syntax from question text
+            q["question"] = re.sub('<.*?>', '', q["question"])
+
             # Remove keys not relevant for Kahoot
             q.pop("no", None)
             q.pop("choice prefix", None)
@@ -366,7 +396,7 @@ class KahootQuizMaker(QuizMaker):
         """Take image filename, post image to kahoot server, return url."""
         print "Uploading image to server... ",
 
-        with open(img_filename, "rb") as img:
+        with open(self.path+img_filename, "rb") as img:
             # URL for uploading media
             url = "https://create.kahoot.it/media-api/media/upload"
 
@@ -482,18 +512,18 @@ class JotformQuizMaker(QuizMaker):
     Get the python 2.7 API from https://github.com/jotform/jotform-api-python
     Get an API key from http://www.jotform.com/myaccount/api.
     """
-    def __init__(self, user, new_api_key=False):
+    def __init__(self, user, force_new=False):
         self.user = user
         # Creates an API client using the API key
-        self.__login(new_api_key)
+        self.login(force_new)
 
-    def __login(self, new_api_key=False):
+    def login(self, force_new=False):
         """Read API key from file or request one from user, create API-client."""
         from jotform import JotformAPIClient
         print "Creating client... ",
         user = self.user
         try:
-            assert (new_api_key==False)
+            assert (force_new==False)
             with open(".%s_jotform_API_key.txt" % user, "r") as f:
                 api_key = f.readline()
             print "sucsessfully read API key from file"
@@ -620,19 +650,7 @@ class JotformQuizMaker(QuizMaker):
                                       for c in q["choices"]])
             form['questions'][str(len(form['questions'])+1)] = question
 
-        # Add a hidden score tab
-        form['questions'][str(len(form['questions'])+1)] = \
-        {
-            'name': 'score',
-            'required': 'no',
-            'text': 'Score',
-            'defaultResult': '0',
-            'hidden': 'Yes',
-            'size': 20,
-            'type': 'control_calculation',
-            'order': str(len(form['questions'])+1)
-        }
-   
+
         # Add a submit button to quiz
         form['questions'][str(len(form['questions'])+1)] = \
         {
@@ -646,23 +664,21 @@ class JotformQuizMaker(QuizMaker):
             'buttonStyle': 'simple_blue'
         }
 
-        # Add properties used in calculation
-        form["properties"]["operands"] = "1" + ","*(len(form["questions"])-4)
-        form["properties"]["equation"] = \
-        "+".join(['{%i}' % i for i in range(2,len(form['questions'])-1)])
-
         return form
 
 if __name__ == "__main__":
-    '''
     #### EXAMPLES USING Kahoot
     # Create QuizMaker-object
-    qm = KahootQuizMaker("jvbrink")
+    qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", force_new=False)
 
     # Example of reading .quiz file, then making and uploading a kahoot quiz
-    questions = qm.read_quiz_file("../demo-quiz/.test_jonas.quiz")
-    quiz = qm.make_quiz(questions) #, cover="../demo-qui8z/fig/red_panda.jpg")
+    questions = qm.read_quiz_file(".test_jonas.quiz")
+    quiz = qm.make_quiz(questions)
     kahoot_id, url = qm.upload_quiz(quiz)
+
+    print "Uploaded quiz can be viewed at %s" % url
+
+    qm.delete_all_quizzes()
 
     # Example of fetching a pre-existing Kahoot
     #q = qm.get_all_quizzes()
@@ -671,14 +687,14 @@ if __name__ == "__main__":
 
     # Deleting all quizzes on users Kahoot page
     # qm.delete_all_quizzes()
-    '''
 
+    '''
     #### EXAMPLES USING JOTFORM
     # Create QuizMaker-object
     qm = JotformQuizMaker("jvbrink")
 
     print qm.get_all_quizzes()
-    '''
+
     questions = qm.read_quiz_file("../demo-quiz/.test_jonas.quiz")
     quiz = qm.make_quiz(questions)
     print quiz
