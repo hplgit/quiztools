@@ -7,6 +7,7 @@ import json
 import requests
 import getpass
 import re
+import sys
 
 class QuizMaker:
     """Base class for quiz makers."""
@@ -200,7 +201,7 @@ class KahootQuizMaker(QuizMaker):
         try:
             assert force_new == False
             with open(".%s_kahoot_token.txt" % user, "r") as f:
-                token = f.readline()
+                self.token = f.readline()
             print "sucsessfully read old token from file"
 
         except:
@@ -224,20 +225,19 @@ class KahootQuizMaker(QuizMaker):
             r.raise_for_status()
 
             # Fetch token from response object
-            token = r.json()[u"access_token"]
+            self.token = r.json()[u"access_token"]
 
             # Write access token to a file for future use
             with open(".%s_kahoot_token.txt" % user, "w") as f:
-                f.write(token)
+                f.write(self.token)
             print "New access token recieved from server and saved to file."
 
         # Assert that connection works
         try:
-            self.get_quizzes()
+            self.get_all_quizzes()
         except:
             print "Access denied. Token may be outdated."
-
-        self.token = token
+            sys.exit()
 
     def get_quiz(self, kahoot_id):
         """Fetch a given kahoot belonging to the user, returns dictionary."""
@@ -687,21 +687,3 @@ if __name__ == "__main__":
 
     # Deleting all quizzes on users Kahoot page
     # qm.delete_all_quizzes()
-
-    '''
-    #### EXAMPLES USING JOTFORM
-    # Create QuizMaker-object
-    qm = JotformQuizMaker("jvbrink")
-
-    print qm.get_all_quizzes()
-
-    questions = qm.read_quiz_file("../demo-quiz/.test_jonas.quiz")
-    quiz = qm.make_quiz(questions)
-    print quiz
-    quiz_id, url = qm.upload_quiz(quiz)
-    
-    qm.client.set_form_properties(quiz_id, {'activeRedirect': u'thanktext'})
-    print qm.get_quiz(quiz_id)["properties"]["sendpostdata"]
-
-    print url
-    '''
