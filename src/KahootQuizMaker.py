@@ -37,7 +37,7 @@ cover - string, url to cover image
 
 Question params
     question - string, question text
-    questionFormat - int, 0 for image, 1 for video
+    questionFormat - int, 0 for image, 1 for video, 2 for iframe
     time - time for question in ms
     points - boolean, defines if the question is worth any points
     numberOfAnswers - int, from 2 to 4
@@ -187,7 +187,7 @@ class KahootQuizMaker(QuizMaker):
         except:
             logging.warning("Access denied. Token may be outdated." \
                             "Requesting new token from server.")
-            self.login(self, force_new=True)
+            self.login(force_new=True)
 
 
     def get_quiz(self, kahoot_id):
@@ -246,7 +246,7 @@ class KahootQuizMaker(QuizMaker):
 
     def delete_quiz(self, kahoot_id):
         """Delete kahoot of given id."""
-        logging.info("Deleting quiz %d from Kahoot servers." % kahoot_id)
+        logging.info("Deleting quiz %s from Kahoot servers." % kahoot_id)
 
         # URL for deleting specific kahoot
         url = "https://create.kahoot.it/rest/kahoots/%s" % kahoot_id
@@ -273,28 +273,168 @@ class KahootQuizMaker(QuizMaker):
 
         logging.info("Kahoots deleted from user. User should now be clean.")
 
+    def make_iframe_quiz(self, questions, **kwargs):
+        """
+        Take a list of dictionaries, return kahoot quiz dictionary.
+        Uses the iframe to support math and code in question text,
+        everything is thus shown in the picture frame.
+        """
+        logging.info("Turning questions into a Kahoot iframe quiz-object.")
+
+        # Extract and modify questions
+        for i, q in enumerate(questions):
+            if i==1: break
+
+            # Look for images
+            img_filenames = self.find_images(q["question"])
+            if len(img_filenames) != 0:
+                logger.warning("Warning: Question %i contains an image, but"/
+                "images are incompatible with the iframe-quizmaker." % i)
+
+            # Extract q&a text and put it into iframe HTML-string
+            q["iframe"] = {"content" : self.iframe_string(q['question'], q['choices'])}
+            q["question"] = ""
+
+            # Remove keys not relevant for iframe
+            q.pop("no", None)
+            q.pop("choice prefix", None)
+            q.pop("question prefix", None)
+
+            q["choices"][0] = {"answer" : "a)", "correct" : False}
+            q["choices"][1] = {"answer" : "b)", "correct" : False}
+            q["choices"][2] = {"answer" : "c)", "correct" : False}
+            q["choices"][3] = {"answer" : "d)", "correct" : True}
+
+            # # Add choices
+            # if len(q["choices"]) > 4:
+            #     logging.warning("Warning: Kahoot only supports up to 4 answers"\
+            #         ", %i of the answers of question %i have been truncated!" \
+            #         % (len(q["choices"]), len(q["choices"])-4))
+
+            # letters = ['a)', 'b)', 'c)', 'd)']
+            # for j, c in enumerate(q["choices"]):
+            #     q["choices"][j] = {"answer" : letters[j],
+            #                        "correct" : c[0] == u'right'}
+            #     if j==3: break
+
+            # Additional question parameters
+            q["numberOfAnswers"] = 4
+            q["questionFormat"] = 2     # iframe format
+            q["time"] = 60000
+            q["image"] = ""
+            q["video"] = {"id" : "",
+                          "startTime" : 0,
+                          "endTime" : 0,
+                          "service" : "youtube"}
+            q["points"] = True
+
+        # Add additional parameters
+        # Default parameters
+        quiz = {
+                 "title" : "Quiz",
+                 "questions" : questions,
+                 "quizType": "quiz",
+                 "visibility": 0,  # 0: private, 1: public
+                 "type": "quiz",
+                 "difficulty": 500,
+                 "audience": "University",
+                 "language": "English",
+                 "description": "Made using quiztools."
+                }
+
+        # User-given parameters
+        for key in kwargs:
+            if key == "cover":
+                url = self.upload_image(kwargs["cover"])
+                quiz["cover"] = url
+            else:
+                quiz[key] = kwargs[key]
+
+        logging.info("Iframe quiz-object successfully made.")
+        return quiz
+
+    def iframe_string(self, question, choices):
+        """Take question and choice string and returns the iframe string."""
+        style = """
+                <style>
+                    .question {font-size:30pt;
+                               font-family:sans-serif;
+                               font-weight:bold;}
+                    .answer {font-size:24pt;
+                             font-family:sans-serif;}
+                    .letter {font-size:24pt;
+                             font-family:sans-serif;
+                             font-weight:bold;}
+                </style>
+                """
+
+        head = ("<html><head>%s<script type='text/javascript' "
+                  "src='//cdn.mathjax.org/mathjax/latest/MathJax"
+                  ".js?config=TeX-AMS-MML_HTMLorMML'></script></head>" % style)
+
+        body = "<body><p class='question'>%s</p>" % question
+
+        letters = ["<span class='letter' color='red'>a)</span>",
+                   "<span class='letter' color='blue'>b)</span>",
+                   "<span class='letter' color='yellow'>c)</span>",
+                   "<span class='letter' color='green'>d)</span>"]
+
+        for i, choice in enumerate(choices):
+            body += "<p class='answer'>%s %s</p>" % (letters[i], choice[1])
+            if i==3: break
+        body += "</body></html>"
+
+        print head+body
+        return head+body
+
     def test_iframe(self, **kwargs):
+        question = u'What kind of mathematical functions are best implemented as a class?'
+        choices = [[u'wrong',
+               u'Linear functions',
+               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
+              [u'wrong',
+               u'Polynomials',
+               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
+              [u'wrong',
+               u'Trigonometric functions',
+               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
+              [u'right',
+               u'Functions with parameters in addition to independent variable(s)',
+               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
+              [u'wrong',
+               u'Functions that need <code>if</code> tests',
+               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
+              [u'wrong',
+               u'Mathematically beautiful functions with a touch of class',
+               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.']]
         questions = \
         [{
-            "question": "ee",
+            "question": "",
             "questionFormat": 2,
             "image": "",
             "time": 30000,
             "iframe":
             {
-                "content": "<html><head><script type='text/javascript' src='//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script></head><body> Compute the result of \\( a+b \\) in the case \\( a=2 \\) and \\( b=2 \\). Here is some code: <pre>\ndef f(x):\n    return 42 + x\n</pre>\n</body></html>"
+              "content": self.iframe_string(question, choices)
             },
             "choices": [
             {
-                "answer": "ee",
+                "answer": "a)",
                 "correct": False
             }, {
-                "answer": "bb",
+                "answer": "b)",
+                "correct": True
+            }, {
+                "answer": "c)",
+                "correct": True
+            }, {
+                "answer": "d)",
                 "correct": True
             }],
             "points": True,
-            "numberOfAnswers": 2
+            "numberOfAnswers": 4
         }]
+
 
         # Add additional parameters
         # Default parameters
@@ -319,14 +459,16 @@ class KahootQuizMaker(QuizMaker):
             else:
                 quiz[key] = kwargs[key]
 
-        logging.info("Quiz-object successfully made.")
         return quiz
 
 
 
 
     def make_quiz(self, questions, **kwargs):
-        """Take a list of dictionaries, return kahoot quiz dictionary."""
+        """
+        Take a list of dictionaries, return kahoot quiz dictionary.
+        Works only for pure-text quizzes.
+        """
         logging.info("Turning questions into a Kahoot quiz object.")
 
         # Extract and modify questions
@@ -458,15 +600,21 @@ MathJax.Hub.Config({
 
 if __name__ == "__main__":
     #### EXAMPLES USING Kahoot
+    tester = 'jonas'
+    tester = 'hpl'
     # Create QuizMaker-object
-    #qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
-    qm = KahootQuizMaker("hplgame", path="../../INF1100-quiz/summerjob14/", loglvl=logging.INFO)
+    if tester == 'jonas':
+        qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
+        # Example of reading .quiz file, then making and uploading a kahoot quiz
+        #questions = qm.read_quiz_file(".test_jonas.quiz")
+        #quiz = qm.test_iframe()
+        questions = qm.read_quiz_file(".class1.quiz")
+        quiz = qm.make_iframe_quiz(questions, title='Test Quiz!')
+    elif tester == 'hpl':
+        qm = KahootQuizMaker("hplgame", path="../../INF1100-quiz/summerjob14/", loglvl=logging.INFO)
 
-    # Example of reading .quiz file, then making and uploading a kahoot quiz
-    #questions = qm.read_quiz_file(".test_jonas.quiz")
-    #questions = qm.read_quiz_file(".looplist_2.quiz")
-    #quiz = qm.make_quiz(questions, title='Loops and lists')
-    quiz = qm.test_iframe()
+        questions = qm.read_quiz_file(".looplist_2.quiz")
+        quiz = qm.make_quiz(questions, title='Loops and lists')
     kahoot_id, url = qm.upload_quiz(quiz)
 
     print "\n\n\nUploaded quiz can be viewed at %s" % url
@@ -477,4 +625,4 @@ if __name__ == "__main__":
     #quiz = qm.get_quiz(kahoot_id)
 
     # Deleting all quizzes on users Kahoot page
-    # qm.delete_all_quizzes()
+    #qm.delete_all_quizzes()
