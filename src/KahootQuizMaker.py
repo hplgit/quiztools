@@ -19,7 +19,7 @@ ___Kahoot syntax guide___
 The 'quiz' object is used as input to upload_quiz, and as output from
 get_quiz and get_quizzes with KahootQuizMaker. It is a python dictionary
 with various key:value parameters. One of these keys are 'questions', which
-should be a list of dictionaries corresponding to each question. 
+should be a list of dictionaries corresponding to each question.
 
 ___PARAMETERS___
 title - string, title of the quiz
@@ -65,15 +65,15 @@ ___EXAMPLE___
     'audience': 'University',
     'language': 'English',
 
-    'questions': 
+    'questions':
     [{
         'question': u'What is the capital of Norway?',
         'points': True,
         'time': 60000,
         'numberOfAnswers': 4,
         'questionFormat': 0,
-        'choices': 
-        [{  
+        'choices':
+        [{
             'answer': u'Helsinki',
             'correct': False
         }, {
@@ -86,7 +86,7 @@ ___EXAMPLE___
             'answer': u'Denmark',
             'correct': False
         }],
-        'video': 
+        'video':
         {
             'service': 'youtube',
             'endTime': 0,
@@ -99,7 +99,7 @@ ___EXAMPLE___
         'time': 60000,
         'numberOfAnswers': 4,
         'questionFormat': 0
-        'choices': 
+        'choices':
         [{
             'answer': u'Sidney',
            'correct': False
@@ -119,7 +119,7 @@ ___EXAMPLE___
             'answer': u'New York',
             'correct': False
         }],
-        'video': 
+        'video':
         {
             'service': 'youtube',
             'endTime': 0,
@@ -136,7 +136,7 @@ class KahootQuizMaker(QuizMaker):
     your quizzes manually at create.kahoot.it to edit or play them.
     """
     def __init__(self, user, path="", force_new=False, loglvl=logging.WARNING):
-        self.user = user 
+        self.user = user
         self.path = path
         logging.basicConfig(format='%(message)s', level=loglvl)
 
@@ -235,7 +235,7 @@ class KahootQuizMaker(QuizMaker):
 
         # Assert HTML status of response
         r.raise_for_status()
-        
+
         logging.info("Quiz successfully uploaded.")
         kahoot_id = r.json()["uuid"]
         return kahoot_id, self.fetch_url(kahoot_id)
@@ -280,9 +280,9 @@ class KahootQuizMaker(QuizMaker):
             "questionFormat": 2,
             "image": "",
             "time": 30000,
-            "iframe": 
+            "iframe":
             {
-                "content": "<html><head><script type='text/javascript' src='//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script></head><body> Compute the result of \\( a+b \\) in the case \\( a=2 \\) and \\( b=2 \\)."
+                "content": "<html><head><script type='text/javascript' src='//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script></head><body> Compute the result of \\( a+b \\) in the case \\( a=2 \\) and \\( b=2 \\). Here is some code: <pre>\ndef f(x):\n    return 42 + x\n</pre>\n</body></html>"
             },
             "choices": [
             {
@@ -342,8 +342,43 @@ class KahootQuizMaker(QuizMaker):
                 logging.warning("Warning: Question %i contains more than one"\
                     "image, only one of them have been uploaded" % i)
 
-            # Remove HTML syntax from question text
-            q["question"] = re.sub('<.*?>', '', q["question"])
+            iframe_formatting = False  # need iframe?
+            math = False
+            patterns = {'code': ['<pre', '<code>'],
+                        'math': [r'\\\( .*? \\\)', r'\$\$']}
+            for key in patterns:
+                for pattern in patterns[key]:
+                    if re.search(pattern, q["question"]):
+                        iframe_formatting = True
+                        if key == 'math':
+                            math = True
+            if iframe_formatting:
+                # Embed question in full HTML code
+                s = '<html>\n<head>'
+                if math:
+                    # MathJax header
+                    s += """
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: {
+     equationNumbers: {  autoNumber: "AMS"  },
+     extensions: ["AMSmath.js", "AMSsymbols.js", "autobold.js", "color.js"]
+  }
+});
+</script>
+<script type="text/javascript"
+ src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+"""
+                s += q["question"] + '\n</body>\n</html>\n'
+                q["iframe"] = {"content": s}
+                q{"question"] = "DUMMY"
+                questionFormat = 2
+
+            else:
+                # Remove HTML syntax from question text (no iframe)
+                q["question"] = re.sub('<.*?>', '', q["question"])
+                questionFormat = 0
 
             # Remove keys not relevant for Kahoot
             q.pop("no", None)
@@ -363,7 +398,7 @@ class KahootQuizMaker(QuizMaker):
 
             # Additional question parameters
             q["numberOfAnswers"] = 4*(n+1 > 4) + (n+1)*(n+1 <= 4)
-            q["questionFormat"] = 0
+            q["questionFormat"] = questionFormat
             q["time"] = 60000
             q["video"] = {"id" : "",
                           "startTime" : 0,
@@ -424,15 +459,17 @@ class KahootQuizMaker(QuizMaker):
 if __name__ == "__main__":
     #### EXAMPLES USING Kahoot
     # Create QuizMaker-object
-    qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
+    #qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
+    qm = KahootQuizMaker("hplgame", path="../../INF1100-quiz/summerjob14/", loglvl=logging.INFO)
 
     # Example of reading .quiz file, then making and uploading a kahoot quiz
     #questions = qm.read_quiz_file(".test_jonas.quiz")
-    #quiz = qm.make_quiz(questions, title='Test Quiz!')
+    #questions = qm.read_quiz_file(".looplist_2.quiz")
+    #quiz = qm.make_quiz(questions, title='Loops and lists')
     quiz = qm.test_iframe()
     kahoot_id, url = qm.upload_quiz(quiz)
 
-    print "Uploaded quiz can be viewed at %s" % url
+    print "\n\n\nUploaded quiz can be viewed at %s" % url
 
     # Example of fetching a pre-existing Kahoot
     #q = qm.get_all_quizzes()
