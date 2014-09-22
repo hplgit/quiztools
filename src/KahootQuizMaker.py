@@ -11,6 +11,7 @@ import getpass
 import re
 import sys
 import logging
+import random
 from QuizMaker import QuizMaker
 
 """
@@ -273,7 +274,7 @@ class KahootQuizMaker(QuizMaker):
 
         logging.info("Kahoots deleted from user. User should now be clean.")
 
-    def make_iframe_quiz(self, questions, **kwargs):
+    def make_iframe_quiz(self, questions, shuffle_answers=True, **kwargs):
         """
         Take a list of dictionaries, return kahoot quiz dictionary.
         Uses the iframe to support math and code in question text,
@@ -283,44 +284,53 @@ class KahootQuizMaker(QuizMaker):
 
         # Extract and modify questions
         for i, q in enumerate(questions):
-            if i==1: break
-
             # Look for images
             img_filenames = self.find_images(q["question"])
             if len(img_filenames) != 0:
                 logger.warning("Warning: Question %i contains an image, but"/
                 "images are incompatible with the iframe-quizmaker." % i)
 
-            # Extract q&a text and put it into iframe HTML-string
-            q["iframe"] = {"content" : self.iframe_string(q['question'], q['choices'])}
+            # Parse choices and set up answers
+            if len(q["choices"]) > 4:
+                logging.warning("Warning: Kahoot only supports up to 4 answers"\
+                    ", %i of the answers of question %i have been truncated!" \
+                    % (len(q["choices"]), len(q["choices"])-4))
+
+                # Make sure we don't truncate all the correct answers
+                # Choose at least 1 correct answer and fill up with wrong ones
+                if shuffle_answers: random.shuffle(q["choices"])
+                q["choices"].sort(key=lambda c: c[0]==u'wrong')              
+                choices = q["choices"][:3]
+                choices.append(q["choices"][-1])
+                random.shuffle(choices)
+           
+            else:
+                choices = q["choices"]
+                if shuffle_answers: random.shuffle(choices)
+
+            # Generate the iframe content string
+            q["iframe"] = {"content" : self.iframe_string(q['question'],
+                                                          choices)}
+
+            # Use an empty question field, as question is moved into iframe
             q["question"] = ""
+            
+            # Use empty choices-fields as answers are moved into iframe
+            letters = ['a)', 'b)', 'c)', 'd)']
+            q["choices"] = []
+            for j, c in enumerate(choices):
+                q["choices"].append({"answer" : letters[j],
+                                     "correct" : c[0] == u'right'})
+            q["numberOfAnswers"] = j+1   
 
             # Remove keys not relevant for iframe
             q.pop("no", None)
             q.pop("choice prefix", None)
             q.pop("question prefix", None)
-            
-            q["choices"][0] = {"answer" : "a)", "correct" : False}
-            q["choices"][1] = {"answer" : "b)", "correct" : False}
-            q["choices"][2] = {"answer" : "c)", "correct" : False}
-            q["choices"][3] = {"answer" : "d)", "correct" : True}
-
-            # # Add choices
-            # if len(q["choices"]) > 4:
-            #     logging.warning("Warning: Kahoot only supports up to 4 answers"\
-            #         ", %i of the answers of question %i have been truncated!" \
-            #         % (len(q["choices"]), len(q["choices"])-4))
-
-            # letters = ['a)', 'b)', 'c)', 'd)']
-            # for j, c in enumerate(q["choices"]):
-            #     q["choices"][j] = {"answer" : letters[j],
-            #                        "correct" : c[0] == u'right'}
-            #     if j==3: break
-
-            # Additional question parameters
-            q["numberOfAnswers"] = 4
-            q["questionFormat"] = 2     # iframe format
-            q["time"] = 60000
+                     
+            # Additional question parameters          
+            q["questionFormat"] = 2  # iframe format
+            q["time"] = 60000 # One minute
             q["image"] = ""
             q["video"] = {"id" : "",
                           "startTime" : 0,
@@ -353,18 +363,17 @@ class KahootQuizMaker(QuizMaker):
         logging.info("Iframe quiz-object successfully made.")
         return quiz
 
+
     def iframe_string(self, question, choices):
-        """Take question and choice string and returns the iframe string."""
+        """Take question text and list of choices return the iframe string."""
         style = """
                 <style>
+                    body {font-family:sans-serif;
+                          font-size:24pt;}
                     .question {font-size:30pt;
-                               font-family:sans-serif;
                                font-weight:bold;}
-                    .answer {font-size:24pt;
-                             font-family:sans-serif;}
-                    .letter {font-size:24pt;
-                             font-family:sans-serif;
-                             font-weight:bold;}
+                    .answer {}
+                    .letter {font-weight:bold;}
                 </style>
                 """
 
@@ -374,98 +383,18 @@ class KahootQuizMaker(QuizMaker):
 
         body = "<body><p class='question'>%s</p>" % question
 
-        letters = ["<span class='letter' color='red'>a)</span>",
-                   "<span class='letter' color='blue'>b)</span>",
-                   "<span class='letter' color='yellow'>c)</span>",
-                   "<span class='letter' color='green'>d)</span>"]
+        letters = ["<span class='letter'>%s)</span>" % l 
+                                                    for l in 'a','b','c','d']
                      
         for i, choice in enumerate(choices):
             body += "<p class='answer'>%s %s</p>" % (letters[i], choice[1])
             if i==3: break
         body += "</body></html>"
 
-        print head+body
         return head+body
 
-    def test_iframe(self, **kwargs):   
-        question = u'What kind of mathematical functions are best implemented as a class?'
-        choices = [[u'wrong',
-               u'Linear functions',
-               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
-              [u'wrong',
-               u'Polynomials',
-               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
-              [u'wrong',
-               u'Trigonometric functions',
-               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
-              [u'right',
-               u'Functions with parameters in addition to independent variable(s)',
-               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
-              [u'wrong',
-               u'Functions that need <code>if</code> tests',
-               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.'],
-              [u'wrong',
-               u'Mathematically beautiful functions with a touch of class',
-               u'A class is very suitable for mathematical functions with parameters (in addition to one or more independent variables), because one then avoids to have the parameters as global variables.']]
-        questions = \
-        [{
-            "question": "",
-            "questionFormat": 2,
-            "image": "",
-            "time": 30000,
-            "iframe": 
-            {
-              "content": self.iframe_string(question, choices)
 
-            },
-            "choices": [
-            {
-                "answer": "a)",
-                "correct": False
-            }, {
-                "answer": "b)",
-                "correct": True
-            }, {    
-                "answer": "c)",
-                "correct": True
-            }, {
-                "answer": "d)",
-                "correct": True
-            }],
-            "points": True,
-            "numberOfAnswers": 4
-        }]
-
-
-        # Add additional parameters
-        # Default parameters
-        quiz = \
-        {
-                 "title" : "Quiz",
-                 "questions" : questions,
-                 "quizType": "quiz",
-                 "visibility": 1,  # 0: private, 1: public
-                 "type": "quiz",
-                 "difficulty": 500,
-                 "audience": "University",
-                 "language": "English",
-                 "description": "Made using quiztools."
-                }
-
-        # User-given parameters
-        for key in kwargs:
-            if key == "cover":
-                url = self.upload_image(kwargs["cover"])
-                quiz["cover"] = url
-            else:
-                quiz[key] = kwargs[key]
-
-        return quiz
-
-
-
-
-    def make_quiz(self, questions, **kwargs):
+    def make_quiz(self, questions, shuffle_answers=True, **kwargs):
         """
         Take a list of dictionaries, return kahoot quiz dictionary.
         Works only for pure-text quizzes.
@@ -493,19 +422,31 @@ class KahootQuizMaker(QuizMaker):
             q.pop("choice prefix", None)
             q.pop("question prefix", None)
 
-            # Add choices
-            for n, c in enumerate(q["choices"]):
-                q["choices"][n] = {"answer" : c[1],
-                    "correct" : c[0] == u"right"}
-
-            # If there are more choices than 4, the rest are truncated
-            if n+1 > 4:
+            # Parse choices and set up answers
+            if len(q["choices"]) > 4:
                 logging.warning("Warning: Kahoot only supports up to 4 answers"\
                     ", %i of the answers of question %i have been truncated!" \
-                    % (n+1-4, i+1))
+                    % (len(q["choices"]), len(q["choices"])-4))
+
+                # Make sure we don't truncate all the correct answers
+                # Choose at least 1 correct answer and fill up with wrong ones
+                if shuffle_answers: random.shuffle(q["choices"])
+                q["choices"].sort(key=lambda c: c[0]==u'wrong')              
+                choices = q["choices"][:3]
+                choices.append(q["choices"][-1])
+                random.shuffle(choices)
+           
+            else:
+                choices = q["choices"]
+                if shuffle_answers: random.shuffle(choices)
+
+            q["choices"] = []
+            for j, c in enumerate(choices):
+                q["choices"].append({"answer" : c[1], 
+                                     "correct" : c[0] == u"right"})
+            q["numberOfAnswers"] = j
 
             # Additional question parameters
-            q["numberOfAnswers"] = 4*(n+1 > 4) + (n+1)*(n+1 <= 4)
             q["questionFormat"] = 0
             q["time"] = 60000
             q["video"] = {"id" : "",
@@ -565,21 +506,15 @@ class KahootQuizMaker(QuizMaker):
 
 
 if __name__ == "__main__":
-    #### EXAMPLES USING Kahoot
     # Create QuizMaker-object
     qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
 
     # Example of reading .quiz file, then making and uploading a kahoot quiz
     questions = qm.read_quiz_file(".class1.quiz")
-    quiz = qm.make_iframe_quiz(questions, title='Test Quiz!')
+    quiz = qm.make_iframe_quiz(questions, visibility=1, title='Test Quiz!')
     
     kahoot_id, url = qm.upload_quiz(quiz)
     print "Uploaded quiz can be viewed at %s" % url
-
-    # Example of fetching a pre-existing Kahoot
-    #q = qm.get_all_quizzes()
-    #kahoot_id =  q[0]["uuid"]
-    #quiz = qm.get_quiz(kahoot_id)
 
     # Deleting all quizzes on users Kahoot page
     #qm.delete_all_quizzes()
