@@ -602,6 +602,7 @@ if __name__ == "__main__":
     #### EXAMPLES USING Kahoot
     tester = 'jonas'
     tester = 'hpl'
+
     # Create QuizMaker-object
     if tester == 'jonas':
         qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
