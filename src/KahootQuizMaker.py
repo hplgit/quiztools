@@ -399,6 +399,10 @@ class KahootQuizMaker(QuizMaker):
         Take a list of dictionaries, return kahoot quiz dictionary.
         Works only for pure-text quizzes.
         """
+        logging.error("make_quiz breaks Kahoot at server-level, please do not use.")
+        return
+
+        '''
         logging.info("Turning questions into a Kahoot quiz object.")
 
         # Extract and modify questions
@@ -514,6 +518,7 @@ MathJax.Hub.Config({
 
         logging.info("Quiz-object successfully made.")
         return quiz
+        '''
 
     def upload_image(self, img_filename):
         """Take image filename, post image to kahoot server, return url."""
@@ -538,7 +543,6 @@ MathJax.Hub.Config({
         r.raise_for_status()
         logging.info("Image successfully uploaded to kahoot server.")
         return r.json()["uri"]
-
 
 
 if __name__ == "__main__":
