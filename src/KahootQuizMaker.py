@@ -369,8 +369,8 @@ class KahootQuizMaker(QuizMaker):
         style = """
                 <style>
                     body {font-family:sans-serif;
-                          font-size:24pt;}
-                    .question {font-size:30pt;
+                          font-size:14pt;}
+                    .question {font-size:22pt;
                                font-weight:bold;}
                     .answer {}
                     .letter {font-weight:bold;}
