@@ -287,7 +287,7 @@ class KahootQuizMaker(QuizMaker):
             # Look for images
             img_filenames = self.find_images(q["question"])
             if len(img_filenames) != 0:
-                logger.warning("Warning: Question %i contains an image, but"/
+                logging.warning("Warning: Question %i contains an image, but"/
                 "images are incompatible with the iframe-quizmaker." % i)
 
             # Parse choices and set up answers
@@ -394,6 +394,96 @@ class KahootQuizMaker(QuizMaker):
         return head+body
 
 
+    def make_quiz_fixed(self, questions, shuffle_answers=True, **kwargs):
+        """
+        Take a list of dictionaries, return kahoot quiz dictionary.
+        Works only for pure-text quizzes.
+        """
+
+        logging.info("Turning questions into a Kahoot quiz object.")
+
+        # Extract and modify questions
+        for i, q in enumerate(questions):
+            # Check for images in question text
+            img_filenames = self.find_images(q["question"])
+            if len(img_filenames) == 0:
+                q["image"] = ""
+            elif len(img_filenames) == 1:
+                q["image"] = self.upload_image(img_filenames[0])
+            else:
+                q["image"] = self.upload_image(img_filenames[0])
+                logging.warning("Warning: Question %i contains more than one"\
+                    "image, only one of them have been uploaded" % i)
+
+            # Remove HTML syntax from question text (no iframe)
+            q["question"] = re.sub('<.*?>', '', q["question"])
+            questionFormat = 0
+
+            # Remove keys not relevant for Kahoot
+            q.pop("no", None)
+            q.pop("choice prefix", None)
+            q.pop("question prefix", None)
+
+            # Parse choices and set up answers
+            if len(q["choices"]) > 4:
+                logging.warning("Warning: Kahoot only supports up to 4 answers"\
+                    ", %i of the answers of question %i have been truncated!" \
+                    % (len(q["choices"]), len(q["choices"])-4))
+
+                # Make sure we don't truncate all the correct answers
+                # Choose at least 1 correct answer and fill up with wrong ones
+                if shuffle_answers: random.shuffle(q["choices"])
+                q["choices"].sort(key=lambda c: c[0]==u'wrong')
+                choices = q["choices"][:3]
+                choices.append(q["choices"][-1])
+                random.shuffle(choices)
+
+            else:
+                choices = q["choices"]
+                if shuffle_answers: random.shuffle(choices)
+
+            q["choices"] = []
+            for j, c in enumerate(choices):
+                q["choices"].append({"answer" : c[1],
+                                     "correct" : c[0] == u"right"})
+            q["numberOfAnswers"] = j+1
+
+            # Additional question parameters
+            q["questionFormat"] = questionFormat
+
+            q["time"] = 45000
+            q["video"] = {"id" : "",
+                          "startTime" : 0,
+                          "endTime" : 0,
+                          "service" : "youtube"}
+            q["points"] = True
+        
+        # Add additional parameters
+        # Default parameters
+        quiz = {
+                 "title" : "Quiz",
+                 "questions" : questions,
+                 "quizType": "quiz",
+                 "visibility": 0,  # 0: private, 1: public
+                 "type": "quiz",
+                 "difficulty": 500,
+                 "audience": "University",
+                 "language": "English",
+                 "description": "Made using quiztools."
+                }
+
+        # User-given parameters
+        for key in kwargs:
+            if key == "cover":
+                url = self.upload_image(kwargs["cover"])
+                quiz["cover"] = url
+            else:
+                quiz[key] = kwargs[key]
+
+        logging.info("Quiz-object successfully made.")
+        return quiz
+
+
     def make_quiz(self, questions, shuffle_answers=True, **kwargs):
         """
         Take a list of dictionaries, return kahoot quiz dictionary.
@@ -488,7 +578,7 @@ MathJax.Hub.Config({
             # Additional question parameters
             q["questionFormat"] = questionFormat
 
-            q["time"] = 60000
+            q["time"] = 30000
             q["video"] = {"id" : "",
                           "startTime" : 0,
                           "endTime" : 0,
@@ -554,8 +644,8 @@ if __name__ == "__main__":
         qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
 
         # Example of reading .quiz file, then making and uploading a kahoot quiz
-        questions = qm.read_quiz_file(".class1.quiz")
-        quiz = qm.make_iframe_quiz(questions, visibility=1, title='Test Quiz!')
+        questions = qm.read_quiz_file(".simula_quiz.quiz")
+        quiz = qm.make_quiz_fixed(questions, visibility=1, title='Simula Science Quiz!')
 
         kahoot_id, url = qm.upload_quiz(quiz)
         print "\n\n\nUploaded quiz can be viewed at %s" % url
