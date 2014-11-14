@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Uses the python pacakge requests, see
 http://docs.python-requests.org/en/latest/
@@ -42,23 +44,49 @@ class QuizMaker:
         self.delete_quiz(quiz_id)
         return quiz
 
-    def read_quiz_file(self, quiz_file):
-        """Read a .quiz file, return a list of dictionaries."""
-        logging.info("Parsing .quiz-file.")
-        with open(self.path+quiz_file) as f:
-            questions = eval(f.read())
-        assert type(questions) == list
-        assert type(questions[0]) == dict
-        logging.info("File succesfully parsed.")
-        return questions
-
     def make_quiz(self, questions, **kwargs):
-        """Take a list of dictionaries as found when parsing .quiz-file,
-        return a quiz-object specialized for the given website."""
+        """
+        Take a list of dictionaries as found when parsing .quiz-file,
+        return a quiz-object specialized for the given website.
+        """
         raise NotImplementedError
 
-    def find_images(self, html_text):
-        """Parse a HTML string and extract image filenames."""
+    @staticmethod
+    def read_quiz_file(filename):
+        """Read a .quiz file, return a list of dictionaries."""
+        logging.info("Parsing .quiz-file.")
+        with open(filename) as f:
+            questions = eval(f.read())
+        try:
+            assert type(questions) == list
+            assert type(questions[0]) == dict
+            logging.info("File succesfully parsed.")
+            return questions
+        except:
+            logging.error("Format of file %s not understood." % filename)
+            return 
+
+    @staticmethod
+    def find_images(html_text):
+        """Parse a HTML string and return list of image filenames."""
         pattern = r'''<img +src=["'](.+?)["']'''
         img_filenames = re.findall(pattern, html_text)
         return img_filenames
+    
+    @staticmethod
+    def find_math(html_text):
+        """Check if a HMTL string contains math and return boolean."""
+        patterns = [r'\\\( .*? \\\)', r'\$\$']
+        for pattern in patterns:
+            if re.search(pattern, html_text):
+                return True
+        return False
+
+    @staticmethod
+    def find_code(html_text):
+        """Check if a HMTL string contains math and return boolean."""
+        patterns = ['<pre', '<code>']
+        for pattern in patterns:
+            if re.search(pattern, html_text):
+                return True
+        return False
