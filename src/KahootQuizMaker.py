@@ -24,8 +24,8 @@ should be a list of dictionaries corresponding to each question.
 
 ___PARAMETERS___
 title - string, title of the quiz
-type - string, not in use, set it to 'quiz'
-quizType - string, 'quiz'/'poll'/'survey'
+type - string, not in use, set it to 'quiz
+'quizType - string, 'quiz'/'poll'/'survey'
 visiblity - int, 0 is private, 1 is public
 language - string, language of the quiz
 description - string, metadata
@@ -277,18 +277,23 @@ class KahootQuizMaker(QuizMaker):
         logging.info("Kahoots deleted from user. User should now be clean.")
 
 
-    def make_quiz(self, questions, shuffle_answers=True, **kwargs):
+    def make_quiz(self, questions, quiz_format='modern', shuffle_answers=True, default_time=60000, **quizargs):
         """
         Take a list of dictionaries, return kahoot quiz dictionary.
-        Each question can be either:
-            (1) Pure-text question and answers
-            (2) Markup question and pure-text answers
-            (3) Markup question and answers
-        All markup text must be contained in the iframe, meaning markup
-        is incompatible with using images.
+
+        Arguments:
+        questions - Dictionary of questions, such as made by make_quiz
+        shuffle_answers - shuffles the order the answers are shown
+        default_time - The default time of each question
+        quizformat - Choose 'classic' for normal Kahoot-formatting, 'modern' for code/math
+        quizargs - Changes the quiz parameters, such as title, visibility, etc.
         """
         logging.info("Turning questions into a Kahoot quiz object.")
-        
+
+        if quiz_format != 'modern' and quiz_format != 'classic':
+            logging.warning("Value of quiz_format not understood. Valid values are 'modern'/'classic', using modern.")
+            modern = True
+
         # Parse over all questions
         for q_nr, q in enumerate(questions):
 
@@ -328,14 +333,14 @@ class KahootQuizMaker(QuizMaker):
                 code = QuizMaker.find_code(c[1])
                 if math or code:
                     answers_markup = True
-                
-            if answers_markup == False:
+            
+            if quiz_format == 'classic':
                 q["choices"] = []
                 for c in choices:
                     q["choices"].append({"answer" : c[1],
                         "correct" : c[0] == u"right"})
                 q["numberOfAnswers"] = len(choices)
-            else:
+            elif quiz_format == 'modern':         
                 # Use empty choices-fields as answers are moved into iframe
                 letters = ['a)', 'b)', 'c)', 'd)']
                 q["choices"] = []
@@ -349,49 +354,46 @@ class KahootQuizMaker(QuizMaker):
             math = QuizMaker.find_math(q["question"])
             code = QuizMaker.find_code(q["question"])
             question_markup = math or code
-                    
-            # Check for incompatibility
-            if images and (question_markup or answers_markup):
-                logging.warning("Warning: Question %i contains both "/
-                "an image and math/code markup. These are incompatible "/
-                "within the same question. The image will be ignored." % (q_nr+1))
-                q["question"] = re.sub('<.*?>', '', q["question"])
-                images = []
-            
-            # Check for too many images
-            if len(images) > 1:
-                logging.warning("Warning: Question %i contains several"/
-                "images, but Kahoot only supports up to one image per "/
-                "question. The additional images will be ignored." % (q_nr+1))
-                images = [images[0]]
-            
-            # Set up pure-text question with image
-            if images:
+            markup = question_markup or answers_markup
+
+            if quiz_format == 'classic':
+                logging.info("Generating a 'classic'-style quiz.")
+
+                # Check for incompatibility
+                if markup:
+                    logging.error("The given quiz contains code and/or math markup"/
+                    " but uses the classic quiz_format, which does not support markup.")
+                    raise AssertionError
+
+                # Check for too many images
+                if len(images) > 1:
+                    logging.warning("Warning: Question %i contains several"/
+                    "images, but Kahoot only supports up to one image per "/
+                    "question. The additional images will be ignored." % (q_nr+1))
+                    images = [images[0]]
+                
                 q["question"] = re.sub('<.*?>', '', q["question"])
                 q["image"] = self.upload_image(images[0])
                 q["questionFormat"] = 0 # Image format
-                logging.info("Question %d contains an image and does not use iframe." % (q_nr+1))
                 
-            # Set up iframe question with choices in iframe
-            elif answers_markup:
-                iframe_str = self.iframe_str_with_answers(q["question"], choices)
-                q["iframe"] = {"content" : iframe_str}
-                if question_markup: q["question"] = ""
-                q["questionFormat"] = 2  # iframe format
-                q["image"] = ""
-                logging.info("Question %d has both the question and answers in the iframe." % (q_nr+1))
-            
-            # Set up iframe question with choices outside iframe
-            else:
-                iframe_str = self.iframe_str_without_answers(q["question"])
-                if question_markup: q["question"] = ""
-                q["iframe"] = {"content" : iframe_str}
-                q["questionFormat"] = 2  # iframe format
-                q["image"] = ""
-                logging.info("Question %d has the question in the iframe, but not the answers." % (q_nr+1))
+            elif quiz_format == 'modern':
+                logging.info("Generating a 'modern'-style quiz.")
 
+                # Check for incompatibility
+                if images:
+                    logging.warning("The quiz format chosen is 'modern', which"/
+                    "does not support images. All images in the quiz will be ignored.")
+                    q["question"] = re.sub('<.*?>', '', q["question"])
+                    images = []
+           
+                iframe_str = self.iframe_str(q["question"], choices)
+                q["iframe"] = {"content" : iframe_str}
+                q["question"] = ""
+                q["questionFormat"] = 2  # iframe format
+                q["image"] = ""
+                
             # Additional question parameters
-            q["time"] = 60000
+            q["time"] = default_time
             q["video"] = {"id" : "",
                           "startTime" : 0,
                           "endTime" : 0,
@@ -413,12 +415,13 @@ class KahootQuizMaker(QuizMaker):
                 }
 
         # User-given parameters
-        for key in kwargs:
+        for key in quizargs:
             if key == "cover":
-                url = self.upload_image(kwargs["cover"])
+                url = self.upload_image(quizargs["cover"])
                 quiz["cover"] = url
+
             else:
-                quiz[key] = kwargs[key]
+                quiz[key] = quizargs[key]
 
         logging.info("Quiz-object successfully made.")
         return quiz
@@ -450,16 +453,11 @@ class KahootQuizMaker(QuizMaker):
                     <script type="text/javascript"
                      src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
                     </script>"""
+        script = """<script type='text/javascript' src='//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>"""
         return script
         
-    def iframe_str_without_answers(self, question):
-        """Take question text and return the iframe string."""
-        head = "<html><head>%s%s</head>" % (self.style(), self.script())
-        body = "<body><p class='question'>%s</p></body>" % question
-        tail = "</html>"
-        return head+body+tail   
     
-    def iframe_str_with_answers(self, question, choices):
+    def iframe_str(self, question, choices):
         """Take question text and list of choices return the iframe string."""
         head = "<html><head>%s%s</head>" % (self.style(), self.script())
         body = "<body><p class='question'>%s</p>" % question
@@ -467,6 +465,7 @@ class KahootQuizMaker(QuizMaker):
         letters = ["<span class='letter'>%s)</span>" % l
                                                     for l in 'a','b','c','d']
         for i, choice in enumerate(choices):
+            body += "<hr>"
             body += "<p class='answer'>%s %s</p>" % (letters[i], choice[1])
             if i==3: break
         body += "</body></html>"
@@ -511,8 +510,8 @@ if __name__ == "__main__":
         qm = KahootQuizMaker("jvbrink", path="../demo-quiz/", loglvl=logging.INFO)
 
         # Example of reading .quiz file, then making and uploading a kahoot quiz
-        questions = qm.read_quiz_file(".class1.quiz")
-        quiz = qm.make_quiz(questions, visibility=1, title='Quiz about classes')
+        questions = qm.read_quiz_file(".sample_quiz.quiz")
+        quiz = qm.make_quiz(questions, quiz_format='modern', default_time=60000, visibility=1, title='Sample Quiz!')
 
         kahoot_id, url = qm.upload_quiz(quiz)
         print "\n\n\nUploaded quiz can be viewed at %s" % url
