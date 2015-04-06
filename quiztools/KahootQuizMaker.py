@@ -175,7 +175,7 @@ class KahootQuizMaker(QuizMaker):
             try:
                 r = requests.post(url, data=json.dumps(authparams),
                                   headers={"content-type":"application/json"})
-            except ConnectionError as e:
+            except requests.ConnectionError as e:
                 print '*** error: could not connect to Kahoot server'
                 print e
                 sys.exit(1)

@@ -2,7 +2,7 @@
 
 This repo contains tools for automating the creation of a quiz at web sites such as Kahoot, Google forms, JotForm.
 
-> The idea is to have large resources of quizzes defined in plain text in ordinar files. A specific quiz can then be quickly made by cut and paste of appropriate text. Software tools in this repo are thereafter used to *automatically create a tailored online quiz*.
+> The idea is to have large resources of quizzes defined in plain text in ordinary files. A specific quiz can then be quickly made by cut and paste of appropriate text. Software tools in this repo are thereafter used to *automatically create a tailored online quiz*.
 
 ## Input syntax
 
@@ -25,14 +25,14 @@ the choices are wrong or right.
 
 Let a file with quizzes as exemplified above have name `myquiz.do.txt`.
 This file must first be processed by DocOnce to
-generate the corresponding Doconce *data structure* for quizzes.
-Any output format in DocOnce can be used, e.g.,
+generate the corresponding DocOnce *data structure* for quizzes.
+Any output format in DocOnce can be used for this purpose, e.g.,
 
 ```
 doconce format html myquiz.do.txt
 ```
-Regardless of the chosen output formt,
-a file with the data structure as a Python list of dictionaries
+Regardless of the chosen output format,
+the file with the data structure as a Python list of dictionaries
 is always made: `.myquiz.quiz`. It typically looks like
 
 ```python
@@ -79,7 +79,7 @@ Go to the URL that is printed to see the online quiz!
    data structure holding the quizzes) and *not* a text file in
    DocOnce format. You must run `doconce format` on the latter
    to produce the `.quiz` file (or you can make `.quiz` files
-   manually once you the [syntax](http://hplgit.github.io/doconce/doc/pub/quiz/._quiz004.html#___sec12)).
+   manually once you know the [syntax](http://hplgit.github.io/doconce/doc/pub/quiz/._quiz004.html#___sec12)).
 
 
 ## Supported web sites for quizzes
@@ -102,9 +102,9 @@ sudo python setup.py install
 
 ## Installation of DocOnce
 
-"DocOnce": "https://github.com/hplgit/doconce" has functionality for
+[DocOnce](https://github.com/hplgit/doconce) has functionality for
 translating compact quiz definitions in ascii files, as outlined
-above, to Kahoot data structures that can be uploaded by quiztools.
+above, to data structures that can be uploaded by quiztools.
 DocOnce is a quite comprehensive piece of software that depends on a
 large number of packages and hence a substantial software
 infrastructure. However, to use quiztools you only need a plain
@@ -115,6 +115,12 @@ Everything you need is installed by this command:
 sudo pip install -e git+https://github.com/hplgit/doconce#egg=doconce --upgrade
 ```
 You need the `pip` program and a Python version 2.7 installation.
+
+## Examples
+
+See `demo-quiz/pyquiz.do.txt` and `demo-quiz/sample_quiz.do.txt` for
+quiz examples. The `.html` files in `demo-quiz` can be loaded into a
+browser to display the quizzes.
 
 ## Status
 
