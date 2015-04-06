@@ -172,8 +172,14 @@ class KahootQuizMaker(QuizMaker):
                           "password": password,
                           "grant_type": "password"}
 
-            r = requests.post(url, data=json.dumps(authparams),
-                              headers={"content-type":"application/json"})
+            try:
+                r = requests.post(url, data=json.dumps(authparams),
+                                  headers={"content-type":"application/json"})
+            except ConnectionError as e:
+                print '*** error: could not connect to Kahoot server'
+                print e
+                sys.exit(1)
+
             # Assert HTML status of response
             r.raise_for_status()
 
@@ -517,22 +523,23 @@ def tester(tester='jonas'):
         kahoot_id, url = qm.upload_quiz(quiz)
         print "\n\n\nUploaded quiz can be viewed at %s" % url
 
-        # Deleting all quizzes on users Kahoot page
-        #qm.delete_all_quizzes()
-
     elif tester == 'hpl':
-        qm = KahootQuizMaker("hplgame", path="../../INF1100-quiz/summerjob14/", loglvl=logging.INFO)
+        qm = KahootQuizMaker("hplgame", path="../demo-quiz", loglvl=logging.INFO)
 
-        questions = qm.read_quiz_file(".looplist_2.quiz")
-        quiz = qm.make_quiz(questions, title='Loops and lists')
+        questions = qm.read_quiz_file(".pyquiz.quiz")
+        quiz = qm.make_quiz(questions, title='Python Programming Quiz')
 
         kahoot_id, url = qm.upload_quiz(quiz)
 
         print "\n\n\nUploaded quiz can be viewed at %s" % url
 
-        # Deleting all quizzes on users Kahoot page
+        # Deleting all quizzes on user's Kahoot page
         #qm.delete_all_quizzes()
 
 
 if __name__ == "__main__":
-    tester()
+    try:
+        name = sys.argv[1]
+    except IndexError:
+        name = 'jonas'
+    tester(name)

@@ -1,0 +1,146 @@
+# Pure text quiz
+
+!bquiz
+Q: Can mathematical calculations in computers be inaccurate?
+
+K: finite-precision arithmetics
+
+Cw: No, not if the program is correct. Computers are perfect calculators.
+E: No, computations with real numbers are done with finite precision
+arithmetics and may result in round-off errors.
+
+Cw: Yes, but only for very small computers like smart phones and tablets.
+E: There is no essential difference between the accuracy of calculations
+on different types of computers.
+
+Cr: Yes, because computers have limited storage, numbers get truncated.
+
+Cw: No, not if you have enough memory to hold your numbers.
+E: The size of the computer memory has nothing to do with the accuracy
+of calculations. However, if you have enough memory, you may represent
+numbers by the `decimal.Decimal` object where you can choose how many
+digits a floating-point number has and thereby get more accurate
+calculations.
+!equiz
+
+# Inline verbatim
+
+!bquiz
+Q: Which Python variable name is correct?
+
+K: variable names
+
+Cr: `_var`
+E: Variable names can start with letters or underscore `_`.
+
+Cw: `1var`
+E: Variable names cannot start with numbers.
+
+Cw: `&top`
+E: Variable names cannot contain other symboles than numbers, letters, and underscore.
+
+Cw: `and`
+E: `and` is a reserved word in Python and cannot be used as variable (if you still want `and` as variable name, it is a common practice to add an underscore: `and_`).
+
+!equiz
+
+# Code block
+
+!bquiz
+Q: What will happen when we run the following program:
+
+!bc pycod
+Celsius_degrees = 22
+Fahrenheit_degrees = 9.0/5*Celcius_degrees + 42
+!ec
+
+K: undefined variables
+
+Cw: The program will crash, because Python detects that the conversion formula from Celsius to Fahrenheit degrees is wrong.
+E: No programming language will check the correctness of a formula - only the programmer has enough information to do this!
+
+Cw: The program will run perfectly, but nothing is printed on the screen.
+E: The program will crash, because of the misspelling in `Celcius_degrees`, the c was an `s` instead of `c` when this variable was defined!
+
+Cr: The program will crash, because `Celcius_degrees` is an undefined name.
+E: Correct!
+
+Cw: The program will not do anything, because a print statement is missing at the end.
+E: Python does not expect a print statement in programs - it is allowed to do a lot and not write out anything from a program. Here we do a lot, in fact we
+define a variable, compute an addition, and define a new variable. Unfortunately, the addition involves an undefined name, so the program will crash.
+
+!equiz
+
+# Code block
+
+!bquiz
+Q: Will the following program work?
+
+!bc pycod
+print "Hei, verden!'
+!ec
+
+K: quotes, strings, Norwegian
+
+Cw: No, because output text in Norwegian is not allowed in Python.
+E: The problem is not Norwegian text as such, but special Norwegian characters that are not in the English alphabet. There are no such characters here. However, the quotes are not compatible, and that results in a problem.
+
+Cw: No, because `verden` should be typeset with capital `V`.
+E: First, Python does not interpret any text in a string variable and can
+certainly not interpret Norwegian. Second, one would normally not capitalize `v`
+in Norwegian as one does with `World` in `Hello, World!` in English.
+
+Cr: No, there will be a syntax error.
+E: Because the quotes surrounding the string are of different type, Python does not find the end of the output string (Python expects double quotes) and issues an error message.
+
+Cw: Yes, because one can freely choose between single or double quotes.
+E: Strings can be enclosed in single or double quotes, but the opening and closing quotes must be of the same type!
+
+!equiz
+
+# Math and code
+
+!bquiz
+Q: Which of the complete
+programs below will correctly evaluate the formula $e^{-at}\cos (wt)$?
+
+K: import; undefined names
+
+Cw:
+!bc pypro
+import math
+print exp(-a*t)*cos(w*t)
+!ec
+E: This program will result in error messages: `exp` and `cos` are unknown function names, and `a`, `t`, and `w`
+are not defined variables.
+
+Cw:
+!bc pypro
+from math import cos, e
+w = 2*pi; t = 0.6
+print e(-a*t)*cos(w*t)
+!ec
+E: There are several problems:
+1) `pi` is not defined (not imported from `math`);
+2) `e(-a*t)` means that `e` is a function, but it is not - it is
+imported as a number (Euler's number);
+3) `a` is not defined.
+
+Cr:
+!bc pypro
+from math import exp, cos, pi
+a, t, w = 0.1, 0.6, 2*pi
+print exp(-a*t)*cos(w*t)
+!ec
+E: This program defines all variables before the expression is evaluated.
+
+Cw:
+!bc pypro
+from math import exp, cos
+a, t, w = 0.1, 0.6
+print exp(-a*t)*cos(w*t)
+!ec
+E: One cannot assign 2-tuple `0.1, 0.6` to the individual
+variables in a 3-tuple `a, t, w`, so the second line results in an
+error message.
+!equiz

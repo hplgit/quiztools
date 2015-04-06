@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import quiztools.KahootQuizMaker
+import logging
 
 def main():
     import sys
     # Merge several .quiz files in the current directory,
     # given on the command line
-    if len(sys) < 4:
+    if len(sys.argv) < 4:
         print 'Usage: quiztools-main.py user "Title of Quiz" .my.quiz .your.quiz ...'
         sys.exit(1)
 
@@ -26,7 +27,7 @@ def main():
 
     print "\n\n\nUploaded quiz can be viewed at %s" % url
 
-def delete_all_quizzes()
+def delete_all_quizzes():
     # Better to import module and run the statements manually
     import sys
     user = sys.argv[1]

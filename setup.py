@@ -1,4 +1,5 @@
 from distutils.core import setup
+import os
 
 setup(name='quiztools',
       version='0.1',
