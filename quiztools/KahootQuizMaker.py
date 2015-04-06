@@ -14,6 +14,8 @@ import logging
 import random
 from QuizMaker import QuizMaker
 
+random.seed(2)  # fix the seed for testing (used to truncate too many answers)
+
 """
 ___Kahoot syntax guide___
 
@@ -136,13 +138,15 @@ class KahootQuizMaker(QuizMaker):
     Uses the Kahoot service. Register a user at getkahoot.com. Accesses
     your quizzes manually at create.kahoot.it to edit or play them.
     """
-    def __init__(self, user, path="", force_new=False, loglvl=logging.WARNING):
+    def __init__(self, user, path="", force_new=False, loglvl=logging.WARNING,
+                 login=True):
         self.user = user
         self.path = path
         logging.basicConfig(format='%(message)s', level=loglvl)
 
-        # Get access token to be used in HTML requests
-        self.login(force_new)
+        if login:
+            # Get access token to be used in HTML requests
+            self.login(force_new)
 
 
     def login(self, force_new=False):
@@ -186,11 +190,11 @@ class KahootQuizMaker(QuizMaker):
             self.get_all_quizzes()
         except:
             # If connection fails, it may be to an outdated access token
-            if force_new == False:
+            if not force_new:
                 logging.warning("Access denied. Token may be outdated." \
                                 "Requesting new token from server.")
                 self.login(force_new=True)
-            if force_new == True:
+            if force_new:
                 logging.error("Access denied.")
 
     def get_quiz(self, kahoot_id):

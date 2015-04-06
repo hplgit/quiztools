@@ -8,20 +8,6 @@ of the "quiz specification format":
 is explained in that document.
 
 
-# Quiz 1
-
-!bquiz
-Q: What is the capital of Norway?
-Cw: Helsinki
-Cw: Drammen
-Cr: Oslo
-Cw: Denmark
-!equiz
-
-
-
-# Quiz 2
-
 !bquiz
 Q: Which of the following cities are capitals?
 Cw: Sidney
@@ -31,10 +17,6 @@ Cr: Bern
 Cr: Ottawa
 Cw: New York
 !equiz
-
-
-
-# Quiz 3
 
 !bquiz
 Q: What is the capital of Norway?
@@ -51,9 +33,6 @@ Cw: Denmark
 !equiz
 
 
-
-# Quiz 4
-
 !bquiz
 Q: This is a very famous quote:
 
@@ -62,7 +41,7 @@ Q: This is a very famous quote:
 !equote
 This quote is attributed to
 
-Cw: Geroge W. Bush
+Cw: George W. Bush
 
 Cr: Donald Knuth
 E: According to "Wikiquote": "http://en.wikiquote.org/wiki/Donald_Knuth",
@@ -76,26 +55,6 @@ science and together with Kristen Nygaard the inventor of
 object-oriented programming, but he is not the man behind this
 quote.
 !equiz
-
-
-
-# Quiz 5
-
-!bquiz
-Q: [] What is the capital of Norway?
-
-Cw: [Answer:] Stockholm
-E: Stockholm is the capital of Sweden, Norway's neighboring country.
-
-Cw: Bergen
-E: Some people from Bergen may claim so... It is just the second
-largest city in Norway.
-
-Cr: Oslo
-
-Cw: Denmark
-!equiz
-
 
 
 # Quiz 6
@@ -126,9 +85,6 @@ units.
 E: It is indeed possible to add pure numbers without any units.
 !equiz
 
-
-
-# Quiz 7
 
 !bquiz
 Q: The equation
@@ -174,10 +130,6 @@ that is zero. Only in one dimension, where $\bm{u}=u_x\bm{i}$
 and consequently $\nabla\cdot\bm{u}=du/dx$, the vector field must be constant.
 !equiz
 
-
-
-# Quiz 8
-
 !bquiz
 Q: We want to create a Python list object of length `n` where each
 element is `0`. Is the following code then what we need?
@@ -204,10 +156,6 @@ an array, not a list.
 Cr: No.
 E: One would need to do `mylist = [0]*n` or `numpy.zeros(n).tolist()`.
 !equiz
-
-
-
-# Quiz 9
 
 !bquiz
 Q:
@@ -295,11 +243,9 @@ function `u(t)`.
 E: Yes, `D` applies a widely used finite difference approximation
 formula to the derivative.
 
-Cw: Both calls to `D` results in the exact derivative, provided we
+Cw: Both calls to `D` result in the exact derivative, provided we
 replace `t^2` by `t**2`.
 
 E: Yes, the finite difference approximation used in `D` is exact
 for quadratic polynomials!
 !equiz
-
-
