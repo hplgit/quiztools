@@ -4,7 +4,7 @@ This repo contains tools for automating the creation of a quiz at web sites such
 
 > The idea is to have large resources of quizzes defined in plain text in ordinar files. A specific quiz can then be quickly made by cut and paste of appropriate text. Software tools in this repo are thereafter used to *automatically create a tailored online quiz*.
 
-## Input syntax and supported online quiz sites
+## Input syntax
 
 Quizzes are written in DocOnce syntax in ordinary text files,
 see the [DocOnce Quiz Documentation](http://hplgit.github.io/doconce/doc/pub/quiz/quiz.html). A minimalistic pure text quiz with a question (`Q`),
@@ -23,9 +23,66 @@ A feature of DocOnce quizzes is the strong support for mathematics and
 computer code in questions and choices. One can also add explanations why
 the choices are wrong or right.
 
-With quiztools, one can read DocOnce files with quizzes
-and automatically create a [Kahoot](https://getkahoot.com)
-online game.
+Let a file with quizzes as exemplified above have name `myquiz.do.txt`.
+This file must first be processed by DocOnce to
+generate the corresponding Doconce *data structure* for quizzes.
+Any output format in DocOnce can be used, e.g.,
+
+```
+doconce format html myquiz.do.txt
+```
+Regardless of the chosen output formt,
+a file with the data structure as a Python list of dictionaries
+is always made: `.myquiz.quiz`. It typically looks like
+
+```python
+[{'choices': [[u'wrong', u'Helsinki']
+              [u'wrong', u'Drammen']
+              [u'right', u'Oslo'],
+              [u'wrong', u'Denmark']],
+  'no': 1,
+  'question': u'What is the capital of Norway?'},
+]
+```
+
+With quiztools, one can read `.quiz` files with such list of
+dictionaries objects and automatically create a
+[Kahoot](https://getkahoot.com) online game.
+
+## Running quiztools
+
+Suppose you have username `whoever` on the Kahoot web site and that
+the list of dictionaries data structure (as shown above) resides in
+a file `.myquiz.quiz` in the current directory.
+The typical Python code to make a Kahoot quiz is then
+
+```python
+import quiztools.KahootQuizMaker
+qm = quiztools.KahootQuizMaker.KahootQuizMaker('whoever')
+questions = qm.read_quiz_file('.myquiz.quiz')
+quiz = qm.make_quiz(questions, title='My First Quiz')
+kahoot_id, url = qm.upload_quiz(quiz)
+print "Uploaded quiz can be viewed at %s" % url
+```
+
+Instead of this code, one can run a program
+
+```
+quiztools-main.py whoever "My First Quiz" .myquiz.quiz
+```
+
+Go to the URL that is printed to see the online quiz!
+
+**Note**:
+
+ * The input to quiztools is a `.quiz` file (with a
+   data structure holding the quizzes) and *not* a text file in
+   DocOnce format. You must run `doconce format` on the latter
+   to produce the `.quiz` file (or you can make `.quiz` files
+   manually once you the [syntax](http://hplgit.github.io/doconce/doc/pub/quiz/._quiz004.html#___sec12)).
+
+
+## Supported web sites for quizzes
 
 Some experiments have been done with JotForm too, but so far, Kahoot
 is the only site we strongly recommend. Kahoot has made sufficient
@@ -58,11 +115,6 @@ Everything you need is installed by this command:
 sudo pip install -e git+https://github.com/hplgit/doconce#egg=doconce --upgrade
 ```
 You need the `pip` program and a Python version 2.7 installation.
-
-## Program
-
-The key source code file is `src/KahhotQuizMaker.py`. See the test block for
-how to use this program.
 
 ## Status
 
