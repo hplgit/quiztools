@@ -166,7 +166,7 @@ class KahootQuizMaker(QuizMaker):
                                        % user)
 
             # Kahoot login server
-            url = "http://db.kahoot.it/rest/authenticate"
+            url = "https://create.kahoot.it/rest/authenticate"
             # Dictionary with login data
             authparams = {"username": user,
                           "password": password,
@@ -240,7 +240,7 @@ class KahootQuizMaker(QuizMaker):
         logging.info("Uploading quiz to kahoot.")
 
         # URL for making quizzes
-        url = "http://db.kahoot.it/rest/kahoots"
+        url = "https://create.kahoot.it/rest/kahoots"
 
         r = requests.post(url, data=json.dumps(quiz), headers={
                                 "content-type" : "application/json",
