@@ -3,7 +3,7 @@ import quiztools.KahootQuizMaker
 import logging
 
 def main():
-    import sys
+    import sys, os
     # Merge several .quiz files in the current directory,
     # given on the command line
     if len(sys.argv) < 4:
